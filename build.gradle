@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'org.axenix'
+version = '1.0.0-SNAPSHOT'
+description = 'axenapi-codegen-generator'
+sourceCompatibility = '11'
+
+repositories {
+//    mavenLocal()
+    mavenCentral()
+    maven {
+        allowInsecureProtocol = true
+        url "${NEXUS_SERVER}"
+        credentials {
+            username NEXUS_USER
+            password NEXUS_PASSWORD
+        }
+    }
+}
+
+//publishing {
+//    publications {
+//        maven(MavenPublication) {
+//            from(components.java)
+//        }
+//    }
+//}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId project.name
+            groupId project.group
+            version version
+            from components.java
+            artifact sourcesJar
+            //artifact javadocJar
+        }
+    }
+    repositories {
+        maven {
+            allowInsecureProtocol = true
+            url "${NEXUS_SERVER}"
+            credentials {
+                username NEXUS_USER
+                password NEXUS_PASSWORD
+            }
+        }
+    }
+
+}
+
+dependencies {
+    implementation 'junit:junit:4.13.2'
+    implementation 'org.openapitools:openapi-generator:6.3.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
