@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'signing'
 }
 
 group = 'org.axenix'
@@ -9,7 +10,7 @@ description = 'axenapi-codegen-generator'
 sourceCompatibility = '11'
 
 repositories {
-//    mavenLocal()
+    mavenLocal()
     mavenCentral()
     maven {
         allowInsecureProtocol = true
@@ -21,13 +22,10 @@ repositories {
     }
 }
 
-//publishing {
-//    publications {
-//        maven(MavenPublication) {
-//            from(components.java)
-//        }
-//    }
-//}
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
 
 publishing {
     publications {
@@ -36,8 +34,16 @@ publishing {
             groupId project.group
             version version
             from components.java
-            //artifact sourcesJar
-            //artifact javadocJar
+            pom {
+                name = 'AxenAPI'
+                description = 'Library for generation Spring conrollers by consumers (kafka consumers and other).'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
         }
     }
     repositories {
