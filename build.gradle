@@ -5,7 +5,6 @@ plugins {
 }
 
 group = 'org.axenix'
-version = '1.0.0-SNAPSHOT'
 description = 'axenapi-codegen-generator'
 sourceCompatibility = '11'
 
@@ -26,6 +25,9 @@ java {
     withJavadocJar()
     withSourcesJar()
 }
+
+String nexus_user = System.getenv('NEXUS_USER')
+String nexus_password = System.getenv('NEXUS_PASSWORD')
 
 publishing {
     publications {
@@ -49,11 +51,9 @@ publishing {
     repositories {
         maven {
             allowInsecureProtocol = true
-            url "${NEXUS_SERVER}"
-            credentials {
-                username NEXUS_USER
-                password NEXUS_PASSWORD
-            }
+            url System.getenv('NEXUS_SERVER_URL').toString()
+            credentials.setUsername(nexus_user)
+            credentials.setPassword(nexus_password)
         }
     }
 
