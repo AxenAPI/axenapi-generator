@@ -17,3 +17,4 @@ out/
 ### VS Code ###
 .vscode/
 /.gradle/
+/build/
