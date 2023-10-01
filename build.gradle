@@ -8,17 +8,18 @@ group = 'org.axenix'
 description = 'axenapi-codegen-generator'
 sourceCompatibility = '11'
 
+String repoURL = ""
+if (version.endsWith('-SNAPSHOT')) {
+    repoURL = System.getenv('NEXUS_SERVER_URL_SNAPSHOT').toString()
+} else {
+    repoURL = System.getenv('NEXUS_SERVER_URL_RELEASE').toString()
+}
+
 String nexus_user = System.getenv('NEXUS_USER')
 String nexus_password = System.getenv('NEXUS_PASSWORD')
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        allowInsecureProtocol = true
-        url System.getenv('NEXUS_SERVER_URL').toString()
-        credentials.setUsername(nexus_user)
-        credentials.setPassword(nexus_password)
-    }
 }
 
 java {
@@ -50,7 +51,7 @@ publishing {
     repositories {
         maven {
             allowInsecureProtocol = true
-            url System.getenv('NEXUS_SERVER_URL').toString()
+            url repoURL
             credentials.setUsername(nexus_user)
             credentials.setPassword(nexus_password)
         }
