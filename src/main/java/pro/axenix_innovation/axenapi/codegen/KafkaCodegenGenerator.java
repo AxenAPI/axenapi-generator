@@ -74,6 +74,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     public static final String GENERATE_CORRELATION_ID = "generateCorrelationId";
 
     public static final String GENERATE_SUPPORTING_FILES = "generateSupportingFiles";
+    private static final String IS_KAFKA_CLIENT = "kafkaClient";
 
     private String camelRestComponent = "servlet";
     private String camelRestBindingMode = "auto";
@@ -89,6 +90,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     private boolean sendBytes = true;
 
+    private boolean fromAxenAPIPlugin = false;
     private String messageIdName = "kafka_messageId";
     private String correlationIdName = "kafka_correlationId";
     private Boolean generateMessageId = true;
@@ -135,6 +137,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         addCliOptions();
         artifactId = "kafka-codegen";
         super.library = "";
+        fromAxenAPIPlugin = false;
     }
 
     @Override
@@ -157,6 +160,21 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         cliOptions.add(new CliOption(CAMEL_VALIDATION_ERROR_PROCESSOR, "validation error processor bean name").defaultValue(camelValidationErrorProcessor));
         cliOptions.add(CliOption.newBoolean(CAMEL_SECURITY_DEFINITIONS, "generate camel security definitions", camelSecurityDefinitions));
         cliOptions.add(new CliOption(CAMEL_DATAFORMAT_PROPERTIES, "list of dataformat properties separated by comma (propertyName1=propertyValue2,...").defaultValue(camelDataformatProperties));
+
+        cliOptions.add(new CliOption("listenerPackage", "Yes\tNo default value\tPackage, in which client/listeners will be generated."));
+        cliOptions.add(new CliOption("modelPackage", "Package, in wich models will be generated (Data Transfer Object)."));
+        cliOptions.add(CliOption.newBoolean("useSpring3", "If true, then code will be generated for springboot 3.1. If false, then code will be generated for spring boot 2.7.", false));
+        cliOptions.add(CliOption.newBoolean("kafkaClient", "If true, client code(producer) will be generated, if false - server code(consumer).", false));
+        cliOptions.add(CliOption.newBoolean("interfaceOnly", "Affects only client generation. If true - Kafka consumer implemenation classes will be generated, if false - only iterfaces.", true));
+        cliOptions.add(CliOption.newString("resultWrapper", "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
+        cliOptions.add(CliOption.newString("securityAnnotation", "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
+        cliOptions.add(CliOption.newBoolean("generateSupportingFiles", "generate camel security definitions", camelSecurityDefinitions));
+        cliOptions.add(CliOption.newBoolean("sendBytes", "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
+        cliOptions.add(CliOption.newBoolean( "useAutoconfig", "If true, then autoconfiguation files will be generated alongside clients.", true));
+        cliOptions.add(CliOption.newString("messageIdName", "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
+        cliOptions.add(CliOption.newString("correlationIdName", "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
+        cliOptions.add(CliOption.newBoolean("generateMessageId", "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
+        cliOptions.add(CliOption.newBoolean("generateCorrelationId", "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
     }
 
     @Override
@@ -169,8 +187,12 @@ public class KafkaCodegenGenerator extends SpringCodegen {
             additionalProperties.put(DATE_LIBRARY, "legacy");
         }
         super.processOpts();
-//        super.apiTemplateFiles.remove("apiController.mustache");
-        LOGGER.info("***** Kafka Generator *****");
+        if(!fromAxenAPIPlugin) {
+            manageAdditionalProperties();
+        }
+        //super.apiTemplateFiles.remove("apiController.mustache");
+        LOGGER.info("***** Additional properties after  manageAdditionalProperties(); *****");
+        logAdditionalProperties();
         supportingFiles.clear();
         apiTemplateFiles.clear();
 
@@ -193,8 +215,6 @@ public class KafkaCodegenGenerator extends SpringCodegen {
             apiTemplateFiles.put("api.mustache", ".java");
         }
 
-        manageAdditionalProperties();
-
         Map<String, String> dataFormatProperties = new HashMap<>();
         if (!"off".equals(camelRestBindingMode)) {
             Arrays.stream(camelDataformatProperties.split(",")).forEach(property -> {
@@ -207,6 +227,13 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         additionalProperties.put(CAMEL_DATAFORMAT_PROPERTIES, dataFormatProperties.entrySet());
     }
 
+    private void logAdditionalProperties() {
+        LOGGER.info("Additional properties:");
+        additionalProperties.forEach(
+                (key, value) -> LOGGER.info(key + ": " + value)
+        );
+    }
+
     private void manageAdditionalProperties() {
         camelRestComponent = manageAdditionalProperty(CAMEL_REST_COMPONENT, camelRestComponent);
         camelRestBindingMode = manageAdditionalProperty(CAMEL_REST_BINDING_MODE, camelRestBindingMode);
@@ -215,6 +242,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         camelValidationErrorProcessor = manageAdditionalProperty(CAMEL_VALIDATION_ERROR_PROCESSOR, camelValidationErrorProcessor);
         camelSecurityDefinitions = manageAdditionalProperty(CAMEL_SECURITY_DEFINITIONS, camelSecurityDefinitions);
         camelDataformatProperties = manageAdditionalProperty(CAMEL_DATAFORMAT_PROPERTIES, camelDataformatProperties);
+
+        isKafkaClient = manageAdditionalProperty(IS_KAFKA_CLIENT, isKafkaClient);
         resultWrapper = manageAdditionalProperty(RESULT_WRAPPER, resultWrapper);
         securityAnnotation = manageAdditionalProperty(SECURITY_ANNOTATION, securityAnnotation);
         sendBytes = manageAdditionalProperty(SEND_BYTES, sendBytes);
@@ -368,5 +397,9 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     public void setGenerateCorrelationId(Boolean generateCorrelationId) {
         this.generateCorrelationId = generateCorrelationId;
+    }
+
+    public void setFromAxenAPIPlugin( boolean fromAxenAPIPlugin) {
+        this.fromAxenAPIPlugin = fromAxenAPIPlugin;
     }
 }
