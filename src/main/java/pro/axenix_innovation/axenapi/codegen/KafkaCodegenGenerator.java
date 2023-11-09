@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kafka.company.codegen;
+package pro.axenix_innovation.axenapi.codegen;
 
 import io.swagger.v3.oas.models.Operation;
 import org.apache.commons.text.CaseUtils;

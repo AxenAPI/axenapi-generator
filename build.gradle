@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-group = 'org.axenix'
+group = 'pro.axenix-innovation'
 description = 'axenapi-codegen-generator'
 sourceCompatibility = '11'
 
