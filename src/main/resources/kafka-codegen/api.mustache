@@ -5,13 +5,13 @@
 */
 package {{apiPackage}};
 
-import org.axenix.axenapi.annotation.KafkaHandlerDescription;
-import org.axenix.axenapi.annotation.KafkaHandlerTags;
-import org.axenix.axenapi.annotation.KafkaSecured;
+import pro.axenix_innovation.axenapi.annotation.KafkaHandlerDescription;
+import pro.axenix_innovation.axenapi.annotation.KafkaHandlerTags;
+import pro.axenix_innovation.axenapi.annotation.KafkaSecured;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.axenix.axenapi.annotation.KafkaHandlerHeader;
-import org.axenix.axenapi.annotation.KafkaHandlerHeaders;
+import pro.axenix_innovation.axenapi.annotation.KafkaHandlerHeader;
+import pro.axenix_innovation.axenapi.annotation.KafkaHandlerHeaders;
 {{#imports}}import {{import}};
 {{/imports}}
 import org.springframework.messaging.handler.annotation.Payload;
