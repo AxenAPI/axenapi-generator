@@ -27,7 +27,9 @@ java {
     withSourcesJar()
 }
 
-
+signing {
+    sign publishing.publications
+}
 
 publishing {
     publications {
