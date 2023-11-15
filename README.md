@@ -3,7 +3,7 @@ Add Axenapi-generator as a classpath. First steps:
 ```groovy
 buildscript {
     dependencies {
-        classpath "pro.axenix-innovation:axenapi-generator:1.0.3-SNAPSHOT"
+        classpath "pro.axenix-innovation:axenapi-generator:1.0.2-SNAPSHOT"
     }
 }
 ```
