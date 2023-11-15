@@ -1,3 +1,5 @@
+### version 1.0.2
+1) Use generator in classpath with  "org.openapi.generator" gradle plugin
 ### version 1.0.1
 1) GPG signing
 ### version 1.0.0
