@@ -251,6 +251,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         generateCorrelationId = manageAdditionalProperty(GENERATE_CORRELATION_ID, generateCorrelationId);
         messageIdName = manageAdditionalProperty(MESSAGE_ID_NAME, messageIdName);
         correlationIdName = manageAdditionalProperty(CORRELATION_ID_NAME, correlationIdName);
+        apiPackage = manageAdditionalProperty("listenerPackage", "pro.axenix_innovation.axenapi.listener");
+        modelPackage = manageAdditionalProperty("modelPackage", "pro.axenix_innovation.axenapi.model");
     }
 
     private <T> T manageAdditionalProperty(String propertyName, T defaultValue) {
