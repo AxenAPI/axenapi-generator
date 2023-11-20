@@ -9,14 +9,21 @@ description = 'axenapi-codegen-generator'
 sourceCompatibility = '11'
 
 String repoURL = ""
+String sonatypeRepoURL = ""
+
 if (version.endsWith('-SNAPSHOT')) {
     repoURL = System.getenv('NEXUS_SERVER_URL_SNAPSHOT').toString()
+    sonatypeRepoURL = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
 } else {
     repoURL = System.getenv('NEXUS_SERVER_URL_RELEASE').toString()
+    sonatypeRepoURL = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
 }
 
 String nexus_user = System.getenv('NEXUS_USER')
 String nexus_password = System.getenv('NEXUS_PASSWORD')
+String sonatype_nexus_user = System.getenv('SONATYPE_NEXUS_USER')
+String sonatype_nexus_password = System.getenv('SONATYPE_NEXUS_PASSWORD')
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -64,6 +71,12 @@ publishing {
             url repoURL
             credentials.setUsername(nexus_user)
             credentials.setPassword(nexus_password)
+        }
+        maven {
+            allowInsecureProtocol = true
+            url sonatypeRepoURL
+            credentials.setUsername(sonatype_nexus_user)
+            credentials.setPassword(sonatype_nexus_password)
         }
     }
 
