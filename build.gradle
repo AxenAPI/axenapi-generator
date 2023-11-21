@@ -50,22 +50,33 @@ publishing {
             pom {
                 name = 'AxenAPI'
                 description = 'Library for generation Spring conrollers by consumers (kafka consumers and other).'
+                url = 'https://github.com/AxenAPI/axenapi-generator'
                 licenses {
                     license {
                         name = 'The Apache License, Version 2.0'
                         url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
+                developers {
+                    developer {
+                        id = "axenix-innovation"
+                        name = "AxenAPI-Generator Contributors"
+                        email = "axenapi-info@axenix.pro"
+                    }
+                }
+                scm {
+                    url = "https://github.com/AxenAPI/axenapi-generator"
+                    connection = "scm:git:git://github.com/AxenAPI/axenapi-generator.git"
+                    developerConnection = "scm:git:ssh://git@github.com:AxenAPI/axenapi-generator.git"
+                }
+                issueManagement {
+                    system = "GitHub"
+                    url = "https://github.com/AxenAPI/axenapi-generator/issues"
+                }
             }
         }
     }
     repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/AxenAPI/axenapi-generator")
-            credentials.setUsername(project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER"))
-            credentials.setPassword(project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN"))
-        }
         maven {
             allowInsecureProtocol = true
             url repoURL
@@ -79,7 +90,6 @@ publishing {
             credentials.setPassword(sonatype_nexus_password)
         }
     }
-
 }
 
 dependencies {
