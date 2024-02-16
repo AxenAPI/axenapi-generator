@@ -15,7 +15,7 @@ public interface {{baseName}}Producer {
 {{#operations}}
     {{#operation}}
         {{#vendorExtensions}}
-    void send{{methodName}}({{methodName}} {{methodNameL}}, Map<String, String> params);
+    void send{{methodName}}({{methodName}} {{methodNameCamel}}, Map<String, String> params);
 
         {{/vendorExtensions}}
     {{/operation}}
