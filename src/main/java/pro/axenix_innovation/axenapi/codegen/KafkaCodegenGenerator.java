@@ -23,6 +23,7 @@ import org.openapitools.codegen.languages.JavaCamelServerCodegen;
 import org.openapitools.codegen.languages.SpringCodegen;
 import org.openapitools.codegen.meta.GeneratorMetadata;
 import org.openapitools.codegen.meta.Stability;
+import org.openapitools.codegen.utils.CamelizeOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 public class KafkaCodegenGenerator extends SpringCodegen {
+    private static final String MODEL_TEMPLATE_NAME = "model.mustache";
     private static final String CLIENT_IMPL_TEMPLATE_NAME = "clientImpl.mustache";
     private static final String KAFKA_SENDER_SERVICE_TEMPLATE_NAME = "kafkaSenderService.mustache";
     private static final String KAFKA_SENDER_SERVICE_TEMPLATE_FILENAME = "KafkaSenderService.java";
@@ -49,6 +51,9 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     private static final String KAFKA_PRODUCER_CONFIG_FILE_NAME = "KafkaProducerConfig.java";
 
     private static final String CLIENT_TEMPLATE_NAME = "client.mustache";
+
+    private static final String KAFKA_LISTENER_TEMPLATE_NAME = "kafkaListener.mustache";
+    private static final String LISTENER_SERVICE_TEMPLATE_NAME = "listenerService.mustache";
     private static final String APPLICATION_JSON = "application/json";
     private static final String APPLICATION_XML = "application/xml";
 
@@ -63,7 +68,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     private static final String GROUP_ID = "groupId";
     private static final String TOPIC = "topic";
     private static final String METHOD_NAME = "methodName";
-    private static final String METHOD_NAME_L = "methodNameL";
+    private static final String METHOD_NAME_CAMEL = "methodNameCamel";
     private static final String KAFKA = "kafka";
     public static final String RESULT_WRAPPER = "resultWrapper";
     public static final String SECURITY_ANNOTATION = "securityAnnotation";
@@ -149,7 +154,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
         if (isKafkaClient) return camelize(name) + "Producer";
 
-        return camelize(name) + "Listener";
+        return camelize(name);
     }
 
     private void addCliOptions() {
@@ -196,6 +201,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         supportingFiles.clear();
         apiTemplateFiles.clear();
 
+        modelTemplateFiles.put(MODEL_TEMPLATE_NAME, ".java");
+
         if (isKafkaClient) {
             apiTemplateFiles.put(CLIENT_TEMPLATE_NAME, ".java");
             if (!interfaceOnly) {
@@ -212,7 +219,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
                 }
             }
         } else {
-            apiTemplateFiles.put("api.mustache", ".java");
+            apiTemplateFiles.put(KAFKA_LISTENER_TEMPLATE_NAME, ".java");
+            apiTemplateFiles.put(LISTENER_SERVICE_TEMPLATE_NAME, ".java");
         }
 
         Map<String, String> dataFormatProperties = new HashMap<>();
@@ -251,7 +259,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         generateCorrelationId = manageAdditionalProperty(GENERATE_CORRELATION_ID, generateCorrelationId);
         messageIdName = manageAdditionalProperty(MESSAGE_ID_NAME, messageIdName);
         correlationIdName = manageAdditionalProperty(CORRELATION_ID_NAME, correlationIdName);
-        apiPackage = manageAdditionalProperty("listenerPackage", "pro.axenix_innovation.axenapi.listener");
+        apiPackage = manageAdditionalProperty("apiPackage", "pro.axenix_innovation.axenapi.listener");
         modelPackage = manageAdditionalProperty("modelPackage", "pro.axenix_innovation.axenapi.model");
     }
 
@@ -301,14 +309,14 @@ public class KafkaCodegenGenerator extends SpringCodegen {
             co.vendorExtensions.put(GROUP_ID, groupId);
             co.vendorExtensions.put(TOPIC, topic);
             co.vendorExtensions.put(METHOD_NAME, pathElements.get(3));
-            co.vendorExtensions.put(METHOD_NAME_L, pathElements.get(3).toLowerCase());
+            co.vendorExtensions.put(METHOD_NAME_CAMEL, camelize(pathElements.get(3), CamelizeOption.LOWERCASE_FIRST_CHAR));
         }
 
         if (pathElements.size() == 3) {
             topic = pathElements.get(1);
             co.vendorExtensions.put(TOPIC, topic);
             co.vendorExtensions.put(METHOD_NAME, pathElements.get(2));
-            co.vendorExtensions.put(METHOD_NAME_L, pathElements.get(2).toLowerCase());
+            co.vendorExtensions.put(METHOD_NAME_CAMEL, camelize(pathElements.get(2), CamelizeOption.LOWERCASE_FIRST_CHAR));
         }
 
         ArrayList<HashMap<String, String>> xTags = (ArrayList<HashMap<String, String>>) operation.getExtensions().get("x-tags");
@@ -344,6 +352,19 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         String suffix = apiTemplateFiles().get(templateName);
         if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
             return apiFileFolder() + File.separator + "impl" + File.separator + toApiFilename(tag) + "Impl" + suffix;
+        }
+
+        String listenerQualifier = "";
+        String listenerInnerPackage = "";
+        if (templateName.equals(KAFKA_LISTENER_TEMPLATE_NAME)) {
+            listenerQualifier = "Listener";
+        } else if (templateName.equals(LISTENER_SERVICE_TEMPLATE_NAME)) {
+            listenerQualifier = "Service";
+            listenerInnerPackage = "service" + File.separator;
+        }
+        if (!listenerQualifier.isEmpty()) {
+            return apiFileFolder() + File.separator + listenerInnerPackage +
+                    toApiFilename(tag) + listenerQualifier + suffix;
         }
 
         return apiFileFolder() + File.separator + toApiFilename(tag) + suffix;
