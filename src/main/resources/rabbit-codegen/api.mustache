@@ -1,0 +1,14 @@
+package {{apiPackage}};
+
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+{{#imports}}import {{import}};
+{{/imports}}
+
+@EnableRabbit
+public interface {{baseName}}Listener {
+{{#methods}}
+    @RabbitListener(queues = "{{queueName}}")
+    void {{methodName}}({{methodParameterType}} {{methodParameterName}});
+{{/methods}}
+}
