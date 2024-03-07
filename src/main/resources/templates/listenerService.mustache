@@ -18,10 +18,10 @@ public interface {{baseName}}Service {
     {{#operation}}
         {{#vendorExtensions}}
     {{#resultWrapper}}
-    {{resultWrapper}}{{#returnSimpleType}}<{{returnType}}>{{/returnSimpleType}}{{^returnSimpleType}}<Void>{{/returnSimpleType}} handle{{methodName}}({{methodName}} {{methodNameCamel}}{{#hasParams}}, Map<String, String> headers{{/hasParams}});
+    {{resultWrapper}}{{#returnSimpleType}}<{{returnType}}>{{/returnSimpleType}}{{^returnSimpleType}}<Void>{{/returnSimpleType}} handle{{modelName}}({{modelName}} {{modelNameCamel}}{{#hasParams}}, Map<String, String> headers{{/hasParams}});
     {{/resultWrapper}}
     {{^resultWrapper}}
-    {{#returnSimpleType}}{{returnType}}{{/returnSimpleType}}{{^returnSimpleType}}void{{/returnSimpleType}} handle{{methodName}}({{methodName}} {{methodNameCamel}}{{#hasParams}}, Map<String, String> headers{{/hasParams}});
+    {{#returnSimpleType}}{{returnType}}{{/returnSimpleType}}{{^returnSimpleType}}void{{/returnSimpleType}} handle{{modelName}}({{modelName}} {{modelNameCamel}}{{#hasParams}}, Map<String, String> headers{{/hasParams}});
     {{/resultWrapper}}
         {{/vendorExtensions}}
     {{/operation}}

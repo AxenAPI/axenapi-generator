@@ -26,8 +26,8 @@ public class {{baseName}}ProducerImpl implements {{baseName}}Producer {
     {{#operation}}
         {{#vendorExtensions}}
     @Override
-    public void send{{methodName}}({{methodName}} {{methodNameCamel}}, Map<String, String> params) {
-        kafkaSenderService.send("{{topic}}", {{methodNameCamel}}, params);
+    public void send{{modelName}}({{modelName}} {{modelNameCamel}}, Map<String, String> params) {
+        kafkaSenderService.send("{{topic}}", {{modelNameCamel}}, params);
     }
 
         {{/vendorExtensions}}
