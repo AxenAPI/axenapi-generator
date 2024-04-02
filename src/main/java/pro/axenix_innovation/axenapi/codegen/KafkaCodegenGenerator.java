@@ -94,16 +94,19 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         this.resultWrapper = resultWrapper;
     }
 
-    private final Logger LOGGER = LoggerFactory.getLogger(KafkaCodegenGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaCodegenGenerator.class);
 
+    @Override
     public CodegenType getTag() {
         return CodegenType.SERVER;
     }
 
+    @Override
     public String getName() {
         return "kafka-codegen";
     }
 
+    @Override
     public String getHelp() {
         return "Generates message communication (e.g. Kafka) participants (listeners/producers)";
     }
@@ -119,7 +122,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     @Override
     public String toApiName(String name) {
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
             return "DefaultListener";
         }
         name = sanitizeName(name);
@@ -141,17 +144,17 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         cliOptions.add(new CliOption("listenerPackage", "Yes\tNo default value\tPackage, in which client/listeners will be generated."));
         cliOptions.add(new CliOption("modelPackage", "Package, in wich models will be generated (Data Transfer Object)."));
         cliOptions.add(CliOption.newBoolean("useSpring3", "If true, then code will be generated for springboot 3.1. If false, then code will be generated for spring boot 2.7.", false));
-        cliOptions.add(CliOption.newBoolean("kafkaClient", "If true, client code(producer) will be generated, if false - server code(consumer).", false));
+        cliOptions.add(CliOption.newBoolean(IS_KAFKA_CLIENT, "If true, client code(producer) will be generated, if false - server code(consumer).", false));
         cliOptions.add(CliOption.newBoolean("interfaceOnly", "Affects only client generation. If true - Kafka consumer implemenation classes will be generated, if false - only iterfaces.", true));
-        cliOptions.add(CliOption.newString("resultWrapper", "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
-        cliOptions.add(CliOption.newString("securityAnnotation", "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
+        cliOptions.add(CliOption.newString(RESULT_WRAPPER, "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
+        cliOptions.add(CliOption.newString(SECURITY_ANNOTATION, "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
         cliOptions.add(CliOption.newBoolean("generateSupportingFiles", "generate camel security definitions", camelSecurityDefinitions));
-        cliOptions.add(CliOption.newBoolean("sendBytes", "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
+        cliOptions.add(CliOption.newBoolean(SEND_BYTES, "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
         cliOptions.add(CliOption.newBoolean( "useAutoconfig", "If true, then autoconfiguation files will be generated alongside clients.", true));
-        cliOptions.add(CliOption.newString("messageIdName", "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
-        cliOptions.add(CliOption.newString("correlationIdName", "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
-        cliOptions.add(CliOption.newBoolean("generateMessageId", "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
-        cliOptions.add(CliOption.newBoolean("generateCorrelationId", "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
+        cliOptions.add(CliOption.newString(MESSAGE_ID_NAME, "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
+        cliOptions.add(CliOption.newString(CORRELATION_ID_NAME, "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
+        cliOptions.add(CliOption.newBoolean(GENERATE_MESSAGE_ID, "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
+        cliOptions.add(CliOption.newBoolean(GENERATE_CORRELATION_ID, "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
     }
 
     @Override
@@ -219,7 +222,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     private void logAdditionalProperties() {
         LOGGER.info("Additional properties:");
         additionalProperties.forEach(
-                (key, value) -> LOGGER.info(key + ": " + value)
+                (key, value) -> LOGGER.info("{}: {}", key, value)
         );
     }
 
@@ -282,7 +285,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         String tags = xTags.stream().map(m ->
                 m.entrySet().stream()
                         .filter(e -> e.getKey().equals("tag"))
-                        .map(entry -> entry.getValue())
+                        .map(Map.Entry::getValue)
                         .collect(Collectors.joining("\", \"", "\"", "\""))
         ).collect(Collectors.joining(", "));
 

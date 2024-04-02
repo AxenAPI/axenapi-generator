@@ -1,0 +1,419 @@
+Subject: [PATCH] Rabbit producer generation
+---
+Index: src/main/java/pro/axenix_innovation/axenapi/codegen/KafkaCodegenGenerator.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/pro/axenix_innovation/axenapi/codegen/KafkaCodegenGenerator.java b/src/main/java/pro/axenix_innovation/axenapi/codegen/KafkaCodegenGenerator.java
+--- a/src/main/java/pro/axenix_innovation/axenapi/codegen/KafkaCodegenGenerator.java	(revision f5d822c3b2994df41af7cc1027cc8d5587932389)
++++ b/src/main/java/pro/axenix_innovation/axenapi/codegen/KafkaCodegenGenerator.java	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -94,16 +94,19 @@
+         this.resultWrapper = resultWrapper;
+     }
+ 
+-    private final Logger LOGGER = LoggerFactory.getLogger(KafkaCodegenGenerator.class);
++    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaCodegenGenerator.class);
+ 
++    @Override
+     public CodegenType getTag() {
+         return CodegenType.SERVER;
+     }
+ 
++    @Override
+     public String getName() {
+         return "kafka-codegen";
+     }
+ 
++    @Override
+     public String getHelp() {
+         return "Generates message communication (e.g. Kafka) participants (listeners/producers)";
+     }
+@@ -119,7 +122,7 @@
+ 
+     @Override
+     public String toApiName(String name) {
+-        if (name.length() == 0) {
++        if (name.isEmpty()) {
+             return "DefaultListener";
+         }
+         name = sanitizeName(name);
+@@ -141,17 +144,17 @@
+         cliOptions.add(new CliOption("listenerPackage", "Yes\tNo default value\tPackage, in which client/listeners will be generated."));
+         cliOptions.add(new CliOption("modelPackage", "Package, in wich models will be generated (Data Transfer Object)."));
+         cliOptions.add(CliOption.newBoolean("useSpring3", "If true, then code will be generated for springboot 3.1. If false, then code will be generated for spring boot 2.7.", false));
+-        cliOptions.add(CliOption.newBoolean("kafkaClient", "If true, client code(producer) will be generated, if false - server code(consumer).", false));
++        cliOptions.add(CliOption.newBoolean(IS_KAFKA_CLIENT, "If true, client code(producer) will be generated, if false - server code(consumer).", false));
+         cliOptions.add(CliOption.newBoolean("interfaceOnly", "Affects only client generation. If true - Kafka consumer implemenation classes will be generated, if false - only iterfaces.", true));
+-        cliOptions.add(CliOption.newString("resultWrapper", "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
+-        cliOptions.add(CliOption.newString("securityAnnotation", "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
++        cliOptions.add(CliOption.newString(RESULT_WRAPPER, "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
++        cliOptions.add(CliOption.newString(SECURITY_ANNOTATION, "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
+         cliOptions.add(CliOption.newBoolean("generateSupportingFiles", "generate camel security definitions", camelSecurityDefinitions));
+-        cliOptions.add(CliOption.newBoolean("sendBytes", "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
++        cliOptions.add(CliOption.newBoolean(SEND_BYTES, "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
+         cliOptions.add(CliOption.newBoolean( "useAutoconfig", "If true, then autoconfiguation files will be generated alongside clients.", true));
+-        cliOptions.add(CliOption.newString("messageIdName", "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
+-        cliOptions.add(CliOption.newString("correlationIdName", "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
+-        cliOptions.add(CliOption.newBoolean("generateMessageId", "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
+-        cliOptions.add(CliOption.newBoolean("generateCorrelationId", "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
++        cliOptions.add(CliOption.newString(MESSAGE_ID_NAME, "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
++        cliOptions.add(CliOption.newString(CORRELATION_ID_NAME, "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
++        cliOptions.add(CliOption.newBoolean(GENERATE_MESSAGE_ID, "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
++        cliOptions.add(CliOption.newBoolean(GENERATE_CORRELATION_ID, "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
+     }
+ 
+     @Override
+@@ -219,7 +222,7 @@
+     private void logAdditionalProperties() {
+         LOGGER.info("Additional properties:");
+         additionalProperties.forEach(
+-                (key, value) -> LOGGER.info(key + ": " + value)
++                (key, value) -> LOGGER.info("{}: {}", key, value)
+         );
+     }
+ 
+@@ -282,7 +285,7 @@
+         String tags = xTags.stream().map(m ->
+                 m.entrySet().stream()
+                         .filter(e -> e.getKey().equals("tag"))
+-                        .map(entry -> entry.getValue())
++                        .map(Map.Entry::getValue)
+                         .collect(Collectors.joining("\", \"", "\"", "\""))
+         ).collect(Collectors.joining(", "));
+ 
+Index: src/main/java/pro/axenix_innovation/axenapi/codegen/helper/KafkaHelper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/KafkaHelper.java b/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/KafkaHelper.java
+--- a/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/KafkaHelper.java	(revision f5d822c3b2994df41af7cc1027cc8d5587932389)
++++ b/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/KafkaHelper.java	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -35,7 +35,7 @@
+     private static final String GROUP_ID = "groupId";
+     private static final String TOPIC = "topic";
+ 
+-    private final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
++    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
+ 
+     private static LibHelper instance;
+ 
+@@ -52,21 +52,20 @@
+             gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
+             if (!isInterfaceOnly) {
+                 gen.apiTemplateFiles().put(CLIENT_IMPL_TEMPLATE_NAME, ".java");
+-                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_TEMPLATE_NAME,
++                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_TEMPLATE_NAME,  // TODO: create method for filename
+                         gen.getSourceFolder() + File.separator + "service", SENDER_SERVICE_FILENAME));
+                 gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_IMPL_TEMPLATE_NAME,
+                         gen.getSourceFolder() + File.separator + "service" + File.separator + "impl", SENDER_SERVICE_IMPL_FILENAME));
+                 gen.supportingFiles().add(new SupportingFile(PRODUCER_CONFIG_TEMPLATE_NAME,
+                         gen.getSourceFolder() + File.separator + "config", PRODUCER_CONFIG_FILENAME));
+-                if (gen.isUseSpringBoot3()) {
+-                    gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
+-                            gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
++
++                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
++                        gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
++                if (gen.isUseSpringBoot3()) {
+                     gen.supportingFiles().add(new SupportingFile(SPRING_3_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF/spring
+                             gen.getSourceFolder() + File.separator + ".." + File.separator + "resources" +
+                                     File.separator + "META-INF" + File.separator + "spring", SPRING_3_AUTOCONFIG_FILENAME));
+                 } else {
+-                    gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
+-                            gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
+                     gen.supportingFiles().add(new SupportingFile(SPRING_2_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF
+                             gen.getSourceFolder() + File.separator + ".." + File.separator +
+                                     "resources" + File.separator + "META-INF", SPRING_2_AUTOCONFIG_FILENAME));
+@@ -83,7 +82,7 @@
+                                     Map<String, List<CodegenOperation>> operations) {
+         String topic = "";
+         String groupId = "";
+-        String topic_groupId = "";
++        String topicGroupId = "";
+ 
+         List<String> pathElements = Arrays.asList(path.split("/"));
+ 
+@@ -111,19 +110,19 @@
+         }
+ 
+         if (!topic.isEmpty()) {
+-            topic_groupId = topic;
++            topicGroupId = topic;
+         }
+ 
+         if (!groupId.isEmpty()) {
+-            topic_groupId = topic_groupId + ' ' + groupId;
++            topicGroupId = topicGroupId + ' ' + groupId;
+         }
+ 
+-        topic_groupId = CaseUtils.toCamelCase(topic_groupId, true, new char[]{'-','_','.',' '}).replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replaceAll("-", "");
+-        return topic_groupId;
++        topicGroupId = CaseUtils.toCamelCase(topicGroupId, true, '-','_','.',' ').replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replace("-", "");
++        return topicGroupId;
+     }
+ 
+     @Override
+-    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {
++    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {  // TODO: consider default implementation in interface
+         String suffix = gen.apiTemplateFiles().get(templateName);
+         if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
+             return gen.apiFileFolder() + File.separator + "impl" + File.separator +
+Index: src/main/java/pro/axenix_innovation/axenapi/codegen/helper/RabbitHelper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/RabbitHelper.java b/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/RabbitHelper.java
+--- a/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/RabbitHelper.java	(revision f5d822c3b2994df41af7cc1027cc8d5587932389)
++++ b/src/main/java/pro/axenix_innovation/axenapi/codegen/helper/RabbitHelper.java	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -3,6 +3,7 @@
+ import io.swagger.v3.oas.models.Operation;
+ import org.apache.commons.text.CaseUtils;
+ import org.openapitools.codegen.CodegenOperation;
++import org.openapitools.codegen.SupportingFile;
+ import org.openapitools.codegen.utils.CamelizeOption;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -18,11 +19,21 @@
+ public class RabbitHelper implements LibHelper {
+     public static final String PREFIX = "rabbit";
+ 
++    private static final String CLIENT_IMPL_TEMPLATE_NAME = PREFIX + File.separator + "clientImpl.mustache";
++    private static final String SENDER_SERVICE_TEMPLATE_NAME = PREFIX + File.separator + "senderService.mustache";
++    private static final String SENDER_SERVICE_FILENAME = "RabbitSenderService.java";
++    private static final String SENDER_SERVICE_IMPL_TEMPLATE_NAME = PREFIX + File.separator + "senderServiceImpl.mustache";
++    private static final String SENDER_SERVICE_IMPL_FILENAME = "RabbitSenderServiceImpl.java";
++    private static final String SENDER_SERVICE_CONFIG_TEMPLATE_NAME = PREFIX + File.separator + "senderServiceConfig.mustache";
++    private static final String SENDER_SERVICE_CONFIG_FILENAME = "RabbitSenderServiceConfig.java";
++    private static final String SPRING_2_AUTOCONFIG_TEMPLATE_NAME = PREFIX + File.separator + "spring_2_autoconfig.mustache";
++    private static final String SPRING_3_AUTOCONFIG_TEMPLATE_NAME = PREFIX + File.separator + "spring_3_autoconfig.mustache";
++
+     private static final String LISTENER_TEMPLATE_NAME = PREFIX + File.separator + "listener.mustache";
+ 
+     private static final String QUEUE = "queue";
+ 
+-    private final Logger LOGGER = LoggerFactory.getLogger(RabbitHelper.class);
++    private static final Logger LOGGER = LoggerFactory.getLogger(RabbitHelper.class);
+ 
+     private static LibHelper instance;
+ 
+@@ -35,8 +46,28 @@
+ 
+     @Override
+     public void setTemplates(KafkaCodegenGenerator gen, boolean isInterfaceOnly) {
+-        // TODO: producer is not supported yet
+-        if (!gen.isKafkaClient()) {
++        if (gen.isKafkaClient()) {
++            gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
++            if (!isInterfaceOnly) {
++                gen.apiTemplateFiles().put(CLIENT_IMPL_TEMPLATE_NAME, ".java");
++                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_TEMPLATE_NAME,
++                        gen.getSourceFolder() + File.separator + "service", SENDER_SERVICE_FILENAME));
++                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_IMPL_TEMPLATE_NAME,
++                        gen.getSourceFolder() + File.separator + "service" + File.separator + "impl", SENDER_SERVICE_IMPL_FILENAME));
++
++                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
++                        gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
++                if (gen.isUseSpringBoot3()) {
++                    gen.supportingFiles().add(new SupportingFile(SPRING_3_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF/spring
++                            gen.getSourceFolder() + File.separator + ".." + File.separator + "resources" +
++                                    File.separator + "META-INF" + File.separator + "spring", SPRING_3_AUTOCONFIG_FILENAME));
++                } else {
++                    gen.supportingFiles().add(new SupportingFile(SPRING_2_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF
++                            gen.getSourceFolder() + File.separator + ".." + File.separator +
++                                    "resources" + File.separator + "META-INF", SPRING_2_AUTOCONFIG_FILENAME));
++                }
++            }
++        } else {
+             gen.apiTemplateFiles().put(LISTENER_TEMPLATE_NAME, ".java");
+             gen.apiTemplateFiles().put(LISTENER_SERVICE_TEMPLATE_NAME, ".java");
+         }
+@@ -58,13 +89,17 @@
+         co.vendorExtensions.put(MODEL_NAME, pathElements.get(2));
+         co.vendorExtensions.put(MODEL_NAME_CAMEL, camelize(pathElements.get(2), CamelizeOption.LOWERCASE_FIRST_CHAR));
+ 
+-        queue = CaseUtils.toCamelCase(queue, true, new char[]{'-','_','.',' '}).replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replaceAll("-", "");
++        queue = CaseUtils.toCamelCase(queue, true, '-','_','.',' ').replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replace("-", "");
+         return queue;
+     }
+ 
+     @Override
+     public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {
+         String suffix = gen.apiTemplateFiles().get(templateName);
++        if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
++            return gen.apiFileFolder() + File.separator + "impl" + File.separator +
++                    gen.toApiFilename(tag) + "Impl" + suffix;
++        }
+ 
+         String listenerQualifier = "";
+         String listenerInnerPackage = "";
+Index: src/main/resources/templates/rabbit/clientImpl.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/clientImpl.mustache b/src/main/resources/templates/rabbit/clientImpl.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/clientImpl.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,36 @@
++/**
++* NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech) ({{{generatorVersion}}}).
++* https://openapi-generator.tech
++* Do not edit the class manually.
++*/
++package {{apiPackage}}.impl;
++
++import service.RabbitSenderService;
++import org.springframework.stereotype.Component;
++import {{apiPackage}}.{{baseName}}Producer;
++
++import java.util.Map;
++
++{{#imports}}import {{import}};
++{{/imports}}
++
++@Component
++public class {{baseName}}ProducerImpl implements {{baseName}}Producer {
++
++    private final RabbitSenderService rabbitSenderService;
++
++    public {{baseName}}ProducerImpl(RabbitSenderService rabbitSenderService) {
++        this.rabbitSenderService = rabbitSenderService;
++    }
++
++{{#operations}}
++    {{#operation}}
++        {{#vendorExtensions}}
++    @Override
++    public void send{{modelName}}({{modelName}} {{modelNameCamel}}, Map<String, String> params) {
++        rabbitSenderService.send("{{queue}}", {{modelNameCamel}});
++    }
++        {{/vendorExtensions}}
++    {{/operation}}
++{{/operations}}
++}
+Index: src/main/resources/templates/rabbit/senderService.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/senderService.mustache b/src/main/resources/templates/rabbit/senderService.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/senderService.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,10 @@
++/**
++* NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech) ({{{generatorVersion}}}).
++* https://openapi-generator.tech
++* Do not edit the class manually.
++*/
++package service;
++
++public interface RabbitSenderService {
++    void send(String queue, Object message);
++}
+Index: src/main/resources/templates/rabbit/senderServiceConfig.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/senderServiceConfig.mustache b/src/main/resources/templates/rabbit/senderServiceConfig.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/senderServiceConfig.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,33 @@
++/**
++* NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech) (6.3.0).
++* https://openapi-generator.tech
++* Do not edit the class manually.
++*/
++package config;
++
++import org.springframework.amqp.rabbit.connection.ConnectionFactory;
++import org.springframework.amqp.rabbit.core.RabbitTemplate;
++import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
++import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.ComponentScan;
++import service.RabbitSenderService;
++import service.impl.RabbitSenderServiceImpl;
++
++@ComponentScan("axenapi")
++public class RabbitSenderServiceConfig {
++
++    @Bean
++    @ConditionalOnMissingBean
++    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
++        RabbitTemplate template = new RabbitTemplate(connectionFactory);
++        template.setMessageConverter(new Jackson2JsonMessageConverter());
++        return template;
++    }
++
++    @Bean
++    @ConditionalOnMissingBean
++    public RabbitSenderService rabbitSenderService(RabbitTemplate template) {
++        return new RabbitSenderServiceImpl(template);
++    }
++}
+Index: src/main/resources/templates/rabbit/senderServiceImpl.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/senderServiceImpl.mustache b/src/main/resources/templates/rabbit/senderServiceImpl.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/senderServiceImpl.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,23 @@
++/**
++* NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech) ({{{generatorVersion}}}).
++* https://openapi-generator.tech
++* Do not edit the class manually.
++*/
++package service.impl;
++
++import org.springframework.amqp.rabbit.core.RabbitTemplate;
++import service.RabbitSenderService;
++
++public class RabbitSenderServiceImpl implements RabbitSenderService {
++
++    private final RabbitTemplate template;
++
++    public RabbitSenderServiceImpl(RabbitTemplate template) {
++        this.template = template;
++    }
++
++    @Override
++    public void send(String queue, Object message) {
++        template.convertAndSend(queue, message);
++    }
++}
+Index: src/main/resources/templates/rabbit/spring_2_autoconfig.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/spring_2_autoconfig.mustache b/src/main/resources/templates/rabbit/spring_2_autoconfig.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/spring_2_autoconfig.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,3 @@
++# Auto Configure
++org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
++config.RabbitSenderServiceConfig
+\ No newline at end of file
+Index: src/main/resources/templates/rabbit/spring_3_autoconfig.mustache
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/templates/rabbit/spring_3_autoconfig.mustache b/src/main/resources/templates/rabbit/spring_3_autoconfig.mustache
+new file mode 100644
+--- /dev/null	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
++++ b/src/main/resources/templates/rabbit/spring_3_autoconfig.mustache	(revision 7edc1ea43ccd76866fc4ed7b9201df7dbaac77f8)
+@@ -0,0 +1,1 @@
++config.RabbitSenderServiceConfig
+\ No newline at end of file

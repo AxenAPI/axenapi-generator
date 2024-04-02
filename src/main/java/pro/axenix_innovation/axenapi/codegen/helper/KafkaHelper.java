@@ -35,7 +35,7 @@ public class KafkaHelper implements LibHelper {
     private static final String GROUP_ID = "groupId";
     private static final String TOPIC = "topic";
 
-    private final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
 
     private static LibHelper instance;
 
@@ -52,21 +52,20 @@ public class KafkaHelper implements LibHelper {
             gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
             if (!isInterfaceOnly) {
                 gen.apiTemplateFiles().put(CLIENT_IMPL_TEMPLATE_NAME, ".java");
-                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_TEMPLATE_NAME,
+                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_TEMPLATE_NAME,  // TODO: create method for filename
                         gen.getSourceFolder() + File.separator + "service", SENDER_SERVICE_FILENAME));
                 gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_IMPL_TEMPLATE_NAME,
                         gen.getSourceFolder() + File.separator + "service" + File.separator + "impl", SENDER_SERVICE_IMPL_FILENAME));
                 gen.supportingFiles().add(new SupportingFile(PRODUCER_CONFIG_TEMPLATE_NAME,
                         gen.getSourceFolder() + File.separator + "config", PRODUCER_CONFIG_FILENAME));
+
+                gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
+                        gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
                 if (gen.isUseSpringBoot3()) {
-                    gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
-                            gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
                     gen.supportingFiles().add(new SupportingFile(SPRING_3_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF/spring
                             gen.getSourceFolder() + File.separator + ".." + File.separator + "resources" +
                                     File.separator + "META-INF" + File.separator + "spring", SPRING_3_AUTOCONFIG_FILENAME));
                 } else {
-                    gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
-                            gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
                     gen.supportingFiles().add(new SupportingFile(SPRING_2_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF
                             gen.getSourceFolder() + File.separator + ".." + File.separator +
                                     "resources" + File.separator + "META-INF", SPRING_2_AUTOCONFIG_FILENAME));
@@ -83,7 +82,7 @@ public class KafkaHelper implements LibHelper {
                                     Map<String, List<CodegenOperation>> operations) {
         String topic = "";
         String groupId = "";
-        String topic_groupId = "";
+        String topicGroupId = "";
 
         List<String> pathElements = Arrays.asList(path.split("/"));
 
@@ -111,19 +110,19 @@ public class KafkaHelper implements LibHelper {
         }
 
         if (!topic.isEmpty()) {
-            topic_groupId = topic;
+            topicGroupId = topic;
         }
 
         if (!groupId.isEmpty()) {
-            topic_groupId = topic_groupId + ' ' + groupId;
+            topicGroupId = topicGroupId + ' ' + groupId;
         }
 
-        topic_groupId = CaseUtils.toCamelCase(topic_groupId, true, new char[]{'-','_','.',' '}).replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replaceAll("-", "");
-        return topic_groupId;
+        topicGroupId = CaseUtils.toCamelCase(topicGroupId, true, '-','_','.',' ').replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replace("-", "");
+        return topicGroupId;
     }
 
     @Override
-    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {
+    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {  // TODO: consider default implementation in interface
         String suffix = gen.apiTemplateFiles().get(templateName);
         if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
             return gen.apiFileFolder() + File.separator + "impl" + File.separator +
