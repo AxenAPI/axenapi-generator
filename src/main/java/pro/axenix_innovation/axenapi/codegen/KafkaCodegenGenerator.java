@@ -23,6 +23,7 @@ import org.openapitools.codegen.meta.GeneratorMetadata;
 import org.openapitools.codegen.meta.Stability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pro.axenix_innovation.axenapi.codegen.helper.JmsHelper;
 import pro.axenix_innovation.axenapi.codegen.helper.KafkaHelper;
 import pro.axenix_innovation.axenapi.codegen.helper.LibHelper;
 import pro.axenix_innovation.axenapi.codegen.helper.RabbitHelper;
@@ -210,6 +211,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
             libHelper = KafkaHelper.getInstance();
         } else if (RabbitHelper.PREFIX.equals(libPrefix)) {
             libHelper = RabbitHelper.getInstance();
+        } else if (JmsHelper.PREFIX.equals(libPrefix)) {
+            libHelper = JmsHelper.getInstance();
         }
 
         if (path != null && libHelper == null) {
