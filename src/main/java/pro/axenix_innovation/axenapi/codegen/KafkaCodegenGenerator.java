@@ -206,7 +206,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
                 libPrefix = pathElements.get(0);
             }
         }
-
+        LOGGER.info("prefix = " + libPrefix);
         if (KafkaHelper.PREFIX.equals(libPrefix)) {
             libHelper = KafkaHelper.getInstance();
         } else if (RabbitHelper.PREFIX.equals(libPrefix)) {
