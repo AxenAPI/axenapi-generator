@@ -17,42 +17,24 @@
 package pro.axenix_innovation.axenapi.codegen;
 
 import io.swagger.v3.oas.models.Operation;
-import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
-import org.openapitools.codegen.languages.JavaCamelServerCodegen;
 import org.openapitools.codegen.languages.SpringCodegen;
 import org.openapitools.codegen.meta.GeneratorMetadata;
 import org.openapitools.codegen.meta.Stability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pro.axenix_innovation.axenapi.codegen.helper.JmsHelper;
+import pro.axenix_innovation.axenapi.codegen.helper.KafkaHelper;
+import pro.axenix_innovation.axenapi.codegen.helper.LibHelper;
+import pro.axenix_innovation.axenapi.codegen.helper.RabbitHelper;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 public class KafkaCodegenGenerator extends SpringCodegen {
-    private static final String CLIENT_IMPL_TEMPLATE_NAME = "clientImpl.mustache";
-    private static final String KAFKA_SENDER_SERVICE_TEMPLATE_NAME = "kafkaSenderService.mustache";
-    private static final String KAFKA_SENDER_SERVICE_TEMPLATE_FILENAME = "KafkaSenderService.java";
-    private static final String KAFKA_SENDER_SERVICE_IMPL_TEMPLATE_NAME = "kafkaSenderServiceImpl.mustache";
-    private static final String KAFKA_SENDER_SERVICE_IMPL_TEMPLATE_FILENAME = "KafkaSenderServiceImpl.java";
-    private static final String KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_NAME = "kafkaSenderServiceConfig.mustache";
-    private static final String KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_FILENAME = "KafkaSenderServiceConfig.java";
-    private static final String KAFKA_SENDER_SPRING_FACTORIES_TEMPLATE = "spring.mustache";
-    private static final String KAFKA_SENDER_SPRING_FACTORIES_TEMPLATE_FILENAME = "spring.factories";
-    private static final String KAFKA_SENDER_SPRING_FACTORIES_3_TEMPLATE = "spring_3_autoconfig.mustache";
-    private static final String KAFKA_SENDER_SPRING_FACTORIES_3_TEMPLATE_FILENAME = "org.springframework.boot.autoconfigure.AutoConfiguration.imports";
-
-    private static final String KAFKA_PRODUCER_CONFIG_TEMPLATE_NAME = "kafkaProducerConfig.mustache";
-    private static final String KAFKA_PRODUCER_CONFIG_FILE_NAME = "KafkaProducerConfig.java";
-
-    private static final String CLIENT_TEMPLATE_NAME = "client.mustache";
-    private static final String APPLICATION_JSON = "application/json";
-    private static final String APPLICATION_XML = "application/xml";
-
-    public static final String PROJECT_NAME = "projectName";
+    private static final String MODEL_TEMPLATE_NAME = "model.mustache";
     public static final String CAMEL_REST_COMPONENT = "camelRestComponent";
     public static final String CAMEL_REST_BINDING_MODE = "camelRestBindingMode";
     public static final String CAMEL_REST_CLIENT_REQUEST_VALIDATION = "camelRestClientRequestValidation";
@@ -60,11 +42,6 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     public static final String CAMEL_VALIDATION_ERROR_PROCESSOR = "camelValidationErrorProcessor";
     public static final String CAMEL_SECURITY_DEFINITIONS = "camelSecurityDefinitions";
     public static final String CAMEL_DATAFORMAT_PROPERTIES = "camelDataformatProperties";
-    private static final String GROUP_ID = "groupId";
-    private static final String TOPIC = "topic";
-    private static final String METHOD_NAME = "methodName";
-    private static final String METHOD_NAME_L = "methodNameL";
-    private static final String KAFKA = "kafka";
     public static final String RESULT_WRAPPER = "resultWrapper";
     public static final String SECURITY_ANNOTATION = "securityAnnotation";
     public static final String SEND_BYTES = "sendBytes";
@@ -73,7 +50,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     public static final String GENERATE_MESSAGE_ID = "generateMessageId";
     public static final String GENERATE_CORRELATION_ID = "generateCorrelationId";
 
-    public static final String GENERATE_SUPPORTING_FILES = "generateSupportingFiles";
+    private static final String IS_KAFKA_CLIENT = "kafkaClient";
 
     private String camelRestComponent = "servlet";
     private String camelRestBindingMode = "auto";
@@ -89,10 +66,13 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     private boolean sendBytes = true;
 
+    private boolean fromAxenAPIPlugin = false;
     private String messageIdName = "kafka_messageId";
     private String correlationIdName = "kafka_correlationId";
     private Boolean generateMessageId = true;
     private Boolean generateCorrelationId = true;
+
+    private LibHelper libHelper;
 
     private boolean useAutoConfig = true;
 
@@ -115,38 +95,42 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         this.resultWrapper = resultWrapper;
     }
 
-    private final Logger LOGGER = LoggerFactory.getLogger(JavaCamelServerCodegen.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaCodegenGenerator.class);
 
+    @Override
     public CodegenType getTag() {
         return CodegenType.SERVER;
     }
 
+    @Override
     public String getName() {
         return "kafka-codegen";
     }
 
+    @Override
     public String getHelp() {
-        return "Generates a Java Camel server (beta).";
+        return "Generates message communication (e.g. Kafka) participants (listeners/producers)";
     }
 
     public KafkaCodegenGenerator() {
         super();
-        templateDir = "kafka-codegen";
+        templateDir = "templates";
         addCliOptions();
         artifactId = "kafka-codegen";
         super.library = "";
+        fromAxenAPIPlugin = false;
     }
 
     @Override
     public String toApiName(String name) {
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
             return "DefaultListener";
         }
         name = sanitizeName(name);
 
         if (isKafkaClient) return camelize(name) + "Producer";
 
-        return camelize(name) + "Listener";
+        return camelize(name);
     }
 
     private void addCliOptions() {
@@ -157,10 +141,27 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         cliOptions.add(new CliOption(CAMEL_VALIDATION_ERROR_PROCESSOR, "validation error processor bean name").defaultValue(camelValidationErrorProcessor));
         cliOptions.add(CliOption.newBoolean(CAMEL_SECURITY_DEFINITIONS, "generate camel security definitions", camelSecurityDefinitions));
         cliOptions.add(new CliOption(CAMEL_DATAFORMAT_PROPERTIES, "list of dataformat properties separated by comma (propertyName1=propertyValue2,...").defaultValue(camelDataformatProperties));
+
+        cliOptions.add(new CliOption("listenerPackage", "Yes\tNo default value\tPackage, in which client/listeners will be generated."));
+        cliOptions.add(new CliOption("modelPackage", "Package, in wich models will be generated (Data Transfer Object)."));
+        cliOptions.add(CliOption.newBoolean("useSpring3", "If true, then code will be generated for springboot 3.1. If false, then code will be generated for spring boot 2.7.", false));
+        cliOptions.add(CliOption.newBoolean(IS_KAFKA_CLIENT, "If true, client code(producer) will be generated, if false - server code(consumer).", false));
+        cliOptions.add(CliOption.newBoolean("interfaceOnly", "Affects only client generation. If true - Kafka consumer implemenation classes will be generated, if false - only iterfaces.", true));
+        cliOptions.add(CliOption.newString(RESULT_WRAPPER, "Class, in which return value will be wrapped. Full path to that class must be specified.").defaultValue(""));
+        cliOptions.add(CliOption.newString(SECURITY_ANNOTATION, "Annotation class which will be used in consumer code generation if consumer authorization is implemented. If this parameter is not specified, security annotations will not be generated.").defaultValue(""));
+        cliOptions.add(CliOption.newBoolean("generateSupportingFiles", "generate camel security definitions", camelSecurityDefinitions));
+        cliOptions.add(CliOption.newBoolean(SEND_BYTES, "If true, then headers with types mapped by header names will not be used. If false, then types will be mapped.", false));
+        cliOptions.add(CliOption.newBoolean( "useAutoconfig", "If true, then autoconfiguation files will be generated alongside clients.", true));
+        cliOptions.add(CliOption.newString(MESSAGE_ID_NAME, "Name of the header, in which messageId value will be stored. If generateMessageId = true").defaultValue("kafka_messageId"));
+        cliOptions.add(CliOption.newString(CORRELATION_ID_NAME, "Name of the header, in which correlationId value will be stored. If generateCorrelationId = true").defaultValue("kafka_correlationId"));
+        cliOptions.add(CliOption.newBoolean(GENERATE_MESSAGE_ID, "If true, then generated clients will use header kafka_messageId by default. Header value will be random UUID.", true));
+        cliOptions.add(CliOption.newBoolean(GENERATE_CORRELATION_ID, "If true, then generated clients will use header kafka_correlationId by default. Header value will be random UUID.", true));
     }
 
     @Override
     public void processOpts() {
+        determineLib();
+
         generatorMetadata = GeneratorMetadata.newBuilder(generatorMetadata)
                 .stability(Stability.BETA)
                 .build();
@@ -169,31 +170,14 @@ public class KafkaCodegenGenerator extends SpringCodegen {
             additionalProperties.put(DATE_LIBRARY, "legacy");
         }
         super.processOpts();
-//        super.apiTemplateFiles.remove("apiController.mustache");
-        LOGGER.info("***** Kafka Generator *****");
-        supportingFiles.clear();
-        apiTemplateFiles.clear();
-
-        if (isKafkaClient) {
-            apiTemplateFiles.put(CLIENT_TEMPLATE_NAME, ".java");
-            if (!interfaceOnly) {
-                apiTemplateFiles.put(CLIENT_IMPL_TEMPLATE_NAME, ".java");
-                supportingFiles.add(new SupportingFile(KAFKA_SENDER_SERVICE_TEMPLATE_NAME, getSourceFolder() + "/service/", KAFKA_SENDER_SERVICE_TEMPLATE_FILENAME));
-                supportingFiles.add(new SupportingFile(KAFKA_SENDER_SERVICE_IMPL_TEMPLATE_NAME, getSourceFolder() + "/service/impl", KAFKA_SENDER_SERVICE_IMPL_TEMPLATE_FILENAME));
-                supportingFiles.add(new SupportingFile(KAFKA_PRODUCER_CONFIG_TEMPLATE_NAME, getSourceFolder() + "/config/", KAFKA_PRODUCER_CONFIG_FILE_NAME));
-                if(this.isUseSpringBoot3()) {
-                    supportingFiles.add(new SupportingFile(KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_NAME, getSourceFolder() + "/config/", KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_FILENAME));
-                    supportingFiles.add(new SupportingFile(KAFKA_SENDER_SPRING_FACTORIES_3_TEMPLATE, getSourceFolder() + "/../resources/META-INF/spring", KAFKA_SENDER_SPRING_FACTORIES_3_TEMPLATE_FILENAME));
-                } else {
-                    supportingFiles.add(new SupportingFile(KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_NAME, getSourceFolder() + "/config/", KAFKA_SENDER_SERVICE_CONFIG_TEMPLATE_FILENAME));
-                    supportingFiles.add(new SupportingFile(KAFKA_SENDER_SPRING_FACTORIES_TEMPLATE, getSourceFolder() + "/../resources/META-INF/", KAFKA_SENDER_SPRING_FACTORIES_TEMPLATE_FILENAME));
-                }
-            }
-        } else {
-            apiTemplateFiles.put("api.mustache", ".java");
+        if(!fromAxenAPIPlugin) {
+            manageAdditionalProperties();
         }
+        //super.apiTemplateFiles.remove("apiController.mustache");
+        LOGGER.info("***** Additional properties after  manageAdditionalProperties(); *****");
+        logAdditionalProperties();
 
-        manageAdditionalProperties();
+        setTemplates();
 
         Map<String, String> dataFormatProperties = new HashMap<>();
         if (!"off".equals(camelRestBindingMode)) {
@@ -207,6 +191,44 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         additionalProperties.put(CAMEL_DATAFORMAT_PROPERTIES, dataFormatProperties.entrySet());
     }
 
+    private void determineLib() {
+        String libPrefix = null;
+        String path = null;
+        var pathEntryOpt = openAPI.getPaths().entrySet().stream().findFirst();
+        if (pathEntryOpt.isPresent()) {
+            path = pathEntryOpt.get().getKey();
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+
+            var pathElements = Arrays.asList(path.split("/"));
+            if (!pathElements.isEmpty()) {
+                libPrefix = pathElements.get(0);
+            }
+        }
+        LOGGER.info("prefix = " + libPrefix);
+        if (KafkaHelper.PREFIX.equals(libPrefix)) {
+            libHelper = KafkaHelper.getInstance();
+        } else if (RabbitHelper.PREFIX.equals(libPrefix)) {
+            libHelper = RabbitHelper.getInstance();
+        } else if (JmsHelper.PREFIX.equals(libPrefix)) {
+            libHelper = JmsHelper.getInstance();
+        }
+
+        if (path != null && libHelper == null) {
+            var exc = new RuntimeException(String.format("Path does not conform to the requirements. (%s)", path));
+            LOGGER.error(exc.getMessage());
+            throw exc;
+        }
+    }
+
+    private void logAdditionalProperties() {
+        LOGGER.info("Additional properties:");
+        additionalProperties.forEach(
+                (key, value) -> LOGGER.info("{}: {}", key, value)
+        );
+    }
+
     private void manageAdditionalProperties() {
         camelRestComponent = manageAdditionalProperty(CAMEL_REST_COMPONENT, camelRestComponent);
         camelRestBindingMode = manageAdditionalProperty(CAMEL_REST_BINDING_MODE, camelRestBindingMode);
@@ -215,6 +237,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         camelValidationErrorProcessor = manageAdditionalProperty(CAMEL_VALIDATION_ERROR_PROCESSOR, camelValidationErrorProcessor);
         camelSecurityDefinitions = manageAdditionalProperty(CAMEL_SECURITY_DEFINITIONS, camelSecurityDefinitions);
         camelDataformatProperties = manageAdditionalProperty(CAMEL_DATAFORMAT_PROPERTIES, camelDataformatProperties);
+
+        isKafkaClient = manageAdditionalProperty(IS_KAFKA_CLIENT, isKafkaClient);
         resultWrapper = manageAdditionalProperty(RESULT_WRAPPER, resultWrapper);
         securityAnnotation = manageAdditionalProperty(SECURITY_ANNOTATION, securityAnnotation);
         sendBytes = manageAdditionalProperty(SEND_BYTES, sendBytes);
@@ -222,6 +246,8 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         generateCorrelationId = manageAdditionalProperty(GENERATE_CORRELATION_ID, generateCorrelationId);
         messageIdName = manageAdditionalProperty(MESSAGE_ID_NAME, messageIdName);
         correlationIdName = manageAdditionalProperty(CORRELATION_ID_NAME, correlationIdName);
+        apiPackage = manageAdditionalProperty("apiPackage", "pro.axenix_innovation.axenapi.listener");
+        modelPackage = manageAdditionalProperty("modelPackage", "pro.axenix_innovation.axenapi.model");
     }
 
     private <T> T manageAdditionalProperty(String propertyName, T defaultValue) {
@@ -240,82 +266,43 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         return Boolean.parseBoolean(propertyValue);
     }
 
+    private void setTemplates() {
+        supportingFiles.clear();
+        apiTemplateFiles.clear();
+
+        modelTemplateFiles.put(MODEL_TEMPLATE_NAME, ".java");
+
+        libHelper.setTemplates(this, interfaceOnly);
+    }
+
     @Override
     public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation co, Map<String, List<CodegenOperation>> operations) {
-//        super.addOperationToGroup(tag, resourcePath, operation, co, operations);
+        String operationId = null;
         String basePath = resourcePath;
         if (basePath.startsWith("/")) {
             basePath = basePath.substring(1);
         }
 
-        List<String> pathElements = Arrays.asList(basePath.split("/"));
-
-        if (pathElements.size() < 3 || pathElements.size() > 4) {
-            LOGGER.error("Path do not conform requirements. ({})", resourcePath);
-            throw new RuntimeException("Path do not conform requirements. ({})");
-        }
-
-        String topic = "";
-        String groupId = "";
-        String kafka = pathElements.get(0);
-
-        if (!kafka.equalsIgnoreCase(KAFKA)) {
-            LOGGER.info("Path does not contain /kafka/. ({})", resourcePath);
-            return;
-        }
-
-        if (pathElements.size() == 4) {
-            groupId = pathElements.get(1);
-            topic = pathElements.get(2);
-            co.vendorExtensions.put(GROUP_ID, groupId);
-            co.vendorExtensions.put(TOPIC, topic);
-            co.vendorExtensions.put(METHOD_NAME, pathElements.get(3));
-            co.vendorExtensions.put(METHOD_NAME_L, pathElements.get(3).toLowerCase());
-        }
-
-        if (pathElements.size() == 3) {
-            topic = pathElements.get(1);
-            co.vendorExtensions.put(TOPIC, topic);
-            co.vendorExtensions.put(METHOD_NAME, pathElements.get(2));
-            co.vendorExtensions.put(METHOD_NAME_L, pathElements.get(2).toLowerCase());
-        }
-
         ArrayList<HashMap<String, String>> xTags = (ArrayList<HashMap<String, String>>) operation.getExtensions().get("x-tags");
 
         String tags = xTags.stream().map(m ->
-             m.entrySet().stream()
-                     .filter(e -> e.getKey().equals("tag"))
-                     .map(entry -> entry.getValue())
-                     .collect(Collectors.joining("\", \"", "\"", "\""))
+                m.entrySet().stream()
+                        .filter(e -> e.getKey().equals("tag"))
+                        .map(Map.Entry::getValue)
+                        .collect(Collectors.joining("\", \"", "\"", "\""))
         ).collect(Collectors.joining(", "));
 
         co.vendorExtensions.put("tags", tags);
-        String topic_groupId = "";
 
-        if (!topic.isEmpty()) {
-//            topic_groupId = topic.substring(0, 1).toUpperCase() + topic.substring(1);
-            topic_groupId = topic;
-        }
+        operationId = libHelper.addOperationInfo(tag, basePath, operation, co, operations);
 
-       if (!groupId.isEmpty()) {
-//            topic_groupId = topic_groupId + groupId.substring(0, 1).toUpperCase() + groupId.substring(1);
-           topic_groupId = topic_groupId + ' ' + groupId;
-       }
-
-//       topic_groupId.replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "");
-        topic_groupId = CaseUtils.toCamelCase(topic_groupId, true, new char[]{'-','_','.',' '}).replaceAll("[^a-zA-Zа-яёА-ЯЁ\\d]", "").replaceAll("-", "");
-        operations.computeIfAbsent(topic_groupId, k -> new ArrayList<>());
-        operations.get(topic_groupId).add(co);
+        operations.computeIfAbsent(operationId, k -> new ArrayList<>());
+        operations.get(operationId).add(co);
     }
 
     @Override
     public String apiFilename(String templateName, String tag) {
-        String suffix = apiTemplateFiles().get(templateName);
-        if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
-            return apiFileFolder() + File.separator + "impl" + File.separator + toApiFilename(tag) + "Impl" + suffix;
-        }
-
-        return apiFileFolder() + File.separator + toApiFilename(tag) + suffix;
+        return libHelper.apiFilename(templateName, tag, this);
     }
 
     public String getSecurityAnnotation() {
@@ -368,5 +355,9 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     public void setGenerateCorrelationId(Boolean generateCorrelationId) {
         this.generateCorrelationId = generateCorrelationId;
+    }
+
+    public void setFromAxenAPIPlugin( boolean fromAxenAPIPlugin) {
+        this.fromAxenAPIPlugin = fromAxenAPIPlugin;
     }
 }

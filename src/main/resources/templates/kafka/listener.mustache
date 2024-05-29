@@ -5,6 +5,8 @@
 */
 package {{apiPackage}};
 
+import {{apiPackage}}.service.{{baseName}}Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerDescription;
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerTags;
 import pro.axenix_innovation.axenapi.annotation.KafkaSecured;
@@ -20,10 +22,16 @@ import java.util.Map;
 
 {{#operations}}
     {{#operation.0.vendorExtensions}}
-//@KafkaListener(topics = "{{topic}}", groupId = "{{groupId}}")
+@KafkaListener(topics = "{{topic}}", groupId = "{{groupId}}")
     {{/operation.0.vendorExtensions}}
 {{/operations}}
-public interface {{baseName}}Listener {
+public final class {{baseName}}Listener {
+    private final {{baseName}}Service service;
+
+    @Autowired
+    public {{baseName}}Listener({{baseName}}Service service) {
+        this.service = service;
+    }
 
 {{#operations}}
     {{#operation}}
@@ -38,10 +46,9 @@ public interface {{baseName}}Listener {
     {{#hasOptionalParams}}
     @KafkaHandlerHeaders(headers = {
         {{#queryParams}}
-        @KafkaHandlerHeader(header = "{{paramName}}"{{#required}}, required = true{{/required}}),
+        @KafkaHandlerHeader(header = "{{paramName}}"{{#required}}, required = true{{/required}}){{^-last}},{{/-last}}
         {{/queryParams}}
     })
-
     {{/hasOptionalParams}}
     {{#securityAnnotation}}
     {{#hasAuthMethods}}
@@ -49,12 +56,13 @@ public interface {{baseName}}Listener {
     {{/hasAuthMethods}}
     {{/securityAnnotation}}
     {{#resultWrapper}}
-    {{resultWrapper}}{{#returnSimpleType}}<{{returnType}}>{{/returnSimpleType}}{{^returnSimpleType}}<Void>{{/returnSimpleType}} handle{{methodName}}(@Payload {{methodName}} {{methodNameL}}{{#hasParams}}, @Headers Map<String, String> headers{{/hasParams}});
+    {{resultWrapper}}{{#returnSimpleType}}<{{returnType}}>{{/returnSimpleType}}{{^returnSimpleType}}<Void>{{/returnSimpleType}} handle{{modelName}}(@Payload {{modelName}} {{modelNameCamel}}{{#hasParams}}, @Headers Map<String, String> headers{{/hasParams}}) {
     {{/resultWrapper}}
     {{^resultWrapper}}
-    {{#returnSimpleType}}{{returnType}}{{/returnSimpleType}}{{^returnSimpleType}}void{{/returnSimpleType}} handle{{methodName}}(@Payload {{methodName}} {{methodNameL}}{{#hasParams}}, @Headers Map<String, String> headers{{/hasParams}});
+    {{#returnSimpleType}}{{returnType}}{{/returnSimpleType}}{{^returnSimpleType}}void{{/returnSimpleType}} handle{{modelName}}(@Payload {{modelName}} {{modelNameCamel}}{{#hasParams}}, @Headers Map<String, String> headers{{/hasParams}}) {
     {{/resultWrapper}}
-
+        {{#resultWrapper}}return{{/resultWrapper}}{{^resultWrapper}}{{#returnSimpleType}}return{{/returnSimpleType}}{{/resultWrapper}} service.handle{{modelName}}({{modelNameCamel}}{{#hasParams}}, headers{{/hasParams}});
+    }
         {{/vendorExtensions}}
     {{/operation}}
 {{/operations}}

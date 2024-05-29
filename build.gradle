@@ -94,7 +94,7 @@ publishing {
 
 dependencies {
     implementation 'junit:junit:4.13.2'
-    implementation 'org.openapitools:openapi-generator:6.3.0'
+    implementation 'org.openapitools:openapi-generator:6.4.0'
 }
 
 tasks.withType(JavaCompile) {
