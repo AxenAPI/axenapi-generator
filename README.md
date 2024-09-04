@@ -36,3 +36,9 @@ openApiGenerate {
     ]
 }
 ```
+
+
+To use generator by openapi-generarator cli use command line:
+```
+$ java -cp "axenapi_generator/build/libs/axenapi-generator-2.0.0.jar;openapi-generator-cli.jar" org.openapitools.codegen.OpenAPIGenerator generate -g messageBroker -o out/ -i api-docs.json --additional-properties=kafkaBootstrap=localhost:29092
+```

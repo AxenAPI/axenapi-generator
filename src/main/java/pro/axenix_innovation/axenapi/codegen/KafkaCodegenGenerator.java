@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
-public class KafkaCodegenGenerator extends SpringCodegen {
+public class KafkaCodegenGenerator extends SpringCodegen implements MyCodegen {
     private static final String MODEL_TEMPLATE_NAME = "model.mustache";
     public static final String CAMEL_REST_COMPONENT = "camelRestComponent";
     public static final String CAMEL_REST_BINDING_MODE = "camelRestBindingMode";

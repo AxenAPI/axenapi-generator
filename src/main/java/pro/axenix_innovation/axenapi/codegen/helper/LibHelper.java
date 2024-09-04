@@ -3,6 +3,7 @@ package pro.axenix_innovation.axenapi.codegen.helper;
 import io.swagger.v3.oas.models.Operation;
 import org.openapitools.codegen.CodegenOperation;
 import pro.axenix_innovation.axenapi.codegen.KafkaCodegenGenerator;
+import pro.axenix_innovation.axenapi.codegen.MyCodegen;
 
 import java.util.List;
 import java.util.Map;
@@ -16,10 +17,10 @@ public interface LibHelper {
     String MODEL_NAME = "modelName";
     String MODEL_NAME_CAMEL = "modelNameCamel";
 
-    void setTemplates(KafkaCodegenGenerator gen, boolean isInterfaceOnly);
+    void setTemplates(MyCodegen gen, boolean isInterfaceOnly);
 
     String addOperationInfo(String tag, String path, Operation operation, CodegenOperation co,
                              Map<String, List<CodegenOperation>> operations);
 
-    String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen);
+    String apiFilename(String templateName, String tag, MyCodegen gen);
 }

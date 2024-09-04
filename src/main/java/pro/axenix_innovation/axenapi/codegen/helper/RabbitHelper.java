@@ -8,6 +8,7 @@ import org.openapitools.codegen.utils.CamelizeOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pro.axenix_innovation.axenapi.codegen.KafkaCodegenGenerator;
+import pro.axenix_innovation.axenapi.codegen.MyCodegen;
 
 import java.io.File;
 import java.util.Arrays;
@@ -45,7 +46,7 @@ public class RabbitHelper implements LibHelper {
     }
 
     @Override
-    public void setTemplates(KafkaCodegenGenerator gen, boolean isInterfaceOnly) {
+    public void setTemplates(MyCodegen gen, boolean isInterfaceOnly) {
         if (gen.isKafkaClient()) {
             gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
             if (!isInterfaceOnly) {
@@ -94,7 +95,7 @@ public class RabbitHelper implements LibHelper {
     }
 
     @Override
-    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {
+    public String apiFilename(String templateName, String tag, MyCodegen gen) {
         String suffix = gen.apiTemplateFiles().get(templateName);
         if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
             return gen.apiFileFolder() + File.separator + "impl" + File.separator +

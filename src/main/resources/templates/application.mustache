@@ -1,0 +1,29 @@
+# Application Configuration
+server.port={{serverPort}}
+spring.jackson.date-format={{basePackage}}.RFC3339DateFormat
+spring.jackson.serialization.WRITE_DATES_AS_TIMESTAMPS=false
+
+{{#useKafka}}
+# kafka configuration
+spring.kafka.bootstrap-servers={{kafkaBootstrap}}
+{{/useKafka}}
+
+{{#useRabbit}}
+# rabbitmq configuration
+spring.rabbitmq.host={{rabbitHost}}
+spring.rabbitmq.port={{rabbitPort}}
+spring.rabbitmq.username={{rabbitUsername}}
+spring.rabbitmq.password={{rabbitPassword}}
+{{/useRabbit}}
+
+{{#useJms}}
+# Jms configuration
+<!--#TODO-->
+{{/useJms}}
+
+{{#virtualService}}
+virtualan.datasource.driver-class-name=org.hsqldb.jdbcDriver
+virtualan.datasource.jdbcurl=jdbc:hsqldb:mem:dataSource
+virtualan.datasource.username=sa
+virtualan.datasource.password=
+{{/virtualService}}
