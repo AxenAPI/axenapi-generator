@@ -46,6 +46,8 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         System.out.println("modelTemplateFiles: " + modelTemplateFiles);
         System.out.println("supportingFiles: " + supportingFiles);
         apiTemplateFiles.clear();
+        // find ApiUtil.Java in supportingFiles and remove it
+        supportingFiles.removeIf(f -> f.getDestinationFilename().equals("ApiUtil.java"));
         libHelper.setTemplates(this, false);
 
         if (this.additionalProperties.containsKey("useAxenAPI")) {
@@ -59,7 +61,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
             return "DefaultListener";
         }
         name = sanitizeName(name);
-
+// TODO
 //        if (isKafkaClient) {
 //            return camelize(name) + "Producer";
 //        }

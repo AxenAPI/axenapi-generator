@@ -37,8 +37,8 @@ public class KafkaHelper implements LibHelper {
     private static final String TOPIC = "topic";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
-    private static final String KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME = "KafkaConsumerConfig.mustache";
-    private static final String KAFKA_CONSUMER_CONFIG_FILENAME = "KafkaConsumerConfig.java";
+    private static final String KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME = PREFIX + File.separator + "KafkaConsumerConfig.mustache";
+    private static final String KAFKA_CONSUMER_CONFIG_FILENAME =  PREFIX + File.separator + "KafkaConsumerConfig.java";
 
     private static LibHelper instance;
 
@@ -64,8 +64,7 @@ public class KafkaHelper implements LibHelper {
 
                 gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
                         gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
-                gen.supportingFiles().add(new SupportingFile(KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME,
-                        gen.getSourceFolder() + File.separator + "config", KAFKA_CONSUMER_CONFIG_FILENAME));
+
                 if (gen.isUseSpringBoot3()) {
                     gen.supportingFiles().add(new SupportingFile(SPRING_3_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF/spring
                             gen.getSourceFolder() + File.separator + ".." + File.separator + "resources" +
@@ -77,6 +76,8 @@ public class KafkaHelper implements LibHelper {
                 }
             }
         } else {
+            gen.supportingFiles().add(new SupportingFile(KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME,
+                    gen.getSourceFolder() + File.separator + "config", KAFKA_CONSUMER_CONFIG_FILENAME));
             gen.apiTemplateFiles().put(LISTENER_TEMPLATE_NAME, ".java");
             gen.apiTemplateFiles().put(LISTENER_SERVICE_TEMPLATE_NAME, ".java");
         }
