@@ -1,0 +1,364 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "App API",
+    "version": "snapshot"
+  },
+  "servers": [
+    {
+      "url": "http://example.example",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/kafka/my_annotation/my_annotation/ExampleMessage": {
+      "post": {
+        "tags": [
+          "my-kafka-handler-annotaion-controller"
+        ],
+        "operationId": "executeExampleMessage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/group-2/multiType/Subordinate": {
+      "post": {
+        "tags": [
+          "group-2",
+          "subordinate"
+        ],
+        "description": "Message listener with Subordinate payload type",
+        "operationId": "executeSubordinate",
+        "parameters": [
+          {
+            "name": "req",
+            "in": "query",
+             "schema": {
+            	"type": "string" 
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "?????????? ????? Subordinate ? ?????, ???????????? ????? ????? replyTopic. ???????????? ???????? ?? ???????????????",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kafka/group-2/multiType/Object": {
+      "post": {
+        "tags": [
+          "group-2",
+          "default handler"
+        ],
+        "description": "Message listener with payload type other then Chief or Subordinate",
+        "operationId": "executeObject",
+        "parameters": [
+          {
+            "name": "req1",
+            "in": "query",
+            "required": true,
+            "schema": {
+            	"type": "string" 
+            }
+            
+          },
+          {
+            "name": "req2",
+            "in": "query",
+             "schema": {
+            	"type": "string" 
+            }
+
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/group-2/multiType/Chief": {
+      "post": {
+        "tags": [
+          "group-2",
+          "chief"
+        ],
+        "description": "Message listener with Chief payload type",
+        "operationId": "executeChief",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Chief"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/group-1/multiType/Subordinate": {
+      "post": {
+        "tags": [
+          "subordinate"
+        ],
+        "description": "Message listener with Subordinate payload type",
+        "operationId": "executeSubordinate_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/group-1/multiType/Object": {
+      "post": {
+        "tags": [
+          "default handler"
+        ],
+        "description": "Message listener with payload type other then Chief or Subordinate",
+        "operationId": "executeObject_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/group-1/multiType/Chief": {
+      "post": {
+        "tags": [
+          "chief"
+        ],
+        "description": "Message listener with Chief payload type",
+        "operationId": "executeChief_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Chief"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        },
+        "security": [
+          {
+            "Internal-Token": []
+          }
+        ]
+      }
+    },
+    "/kafka/foo/my_topic/Object": {
+      "post": {
+        "tags": [
+          "example-listener-controller"
+        ],
+        "operationId": "executeObject_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/foo/my_topic/ExampleMessage": {
+      "post": {
+        "tags": [
+          "example-listener-controller"
+        ],
+        "operationId": "executeExampleMessage_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "???????????? ???????? ???????????"
+          }
+        }
+      }
+    },
+    "/kafka/foo/my_compitable_future/Chief": {
+      "post": {
+        "tags": [
+          "competable-future-kafka-listener-controller"
+        ],
+        "operationId": "executeChief_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Chief"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "?????????? ????? ExampleMessage ? ?????, ???????????? ????? ????? replyTopic. ???????????? ???????? ?? ???????????????",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExampleMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExampleMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "example field"
+          }
+        },
+        "description": "example message"
+      },
+      "Subordinate": {
+        "required": [
+          "chiefName",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 20,
+            "minLength": 3,
+            "type": "string",
+            "description": "Subordinate name"
+          },
+          "chiefName": {
+            "maxLength": 20,
+            "minLength": 3,
+            "type": "string",
+            "description": "chief name of Subordinate"
+          }
+        },
+        "description": "Subordinate DTO"
+      },
+      "Chief": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 20,
+            "minLength": 3,
+            "type": "string",
+            "description": "chief name"
+          }
+        },
+        "description": "DTO for chief creating"
+      }
+    },
+    "securitySchemes": {
+      "Public-Bearer-Jwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "Internal-Token": {
+        "type": "apiKey",
+        "name": "SERVICE_ACCESS_TOKEN",
+        "in": "header"
+      }
+    }
+  }
+}
