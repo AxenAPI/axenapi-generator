@@ -11,10 +11,12 @@
 @Schema({{#name}}name = "{{name}}", {{/name}}description = "{{{description}}}")
 {{/swagger2AnnotationLibrary}}
 {{/description}}
+{{#isUseAxenAPI}}
 {{#vendorExtensions.x-outgoing}}
 @Outgoing(topics = { {{#topics}}"{{.}}"{{^-last}}, {{/-last}}{{/topics}} }, type = Outgoing.Type.{{#lambda.uppercase}}{{type}}{{/lambda.uppercase}}{{^tags}}){{/tags}}{{#tags}}{{#-first}},
         tags = { {{/-first}}"{{.}}"{{^-last}}, {{/-last}}{{#-last}} }){{/-last}}{{/tags}}
 {{/vendorExtensions.x-outgoing}}
+{{/isUseAxenAPI}}
 {{#discriminator}}
 {{>typeInfoAnnotation}}
 {{/discriminator}}
