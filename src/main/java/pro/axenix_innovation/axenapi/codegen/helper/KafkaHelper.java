@@ -76,8 +76,11 @@ public class KafkaHelper implements LibHelper {
                 }
             }
         } else {
+            if(!isInterfaceOnly) {
+                gen.apiTemplateFiles().put(LISTENER_SERVICE_IMPL_TEMPLATE_NAME, ".java");
+            }
             gen.supportingFiles().add(new SupportingFile(KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME,
-                    gen.getSourceFolder() + File.separator + "config", KAFKA_CONSUMER_CONFIG_FILENAME));
+                    (gen.getSourceFolder() + File.separator + gen.getConfigPackage()).replace(".", java.io.File.separator), KAFKA_CONSUMER_CONFIG_FILENAME));
             gen.apiTemplateFiles().put(LISTENER_TEMPLATE_NAME, ".java");
             gen.apiTemplateFiles().put(LISTENER_SERVICE_TEMPLATE_NAME, ".java");
         }
@@ -141,6 +144,9 @@ public class KafkaHelper implements LibHelper {
             listenerQualifier = "Listener";
         } else if (templateName.equals(LISTENER_SERVICE_TEMPLATE_NAME)) {
             listenerQualifier = "Service";
+            listenerInnerPackage = "service" + File.separator;
+        } else if (LISTENER_SERVICE_IMPL_TEMPLATE_NAME.equals(templateName)) {
+            listenerQualifier = "ServiceImpl";
             listenerInnerPackage = "service" + File.separator;
         }
         if (!listenerQualifier.isEmpty()) {

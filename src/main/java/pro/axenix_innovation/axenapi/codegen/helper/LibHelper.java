@@ -13,6 +13,7 @@ public interface LibHelper {
     String LISTENER_SERVICE_TEMPLATE_NAME = "listenerService.mustache";
     String SPRING_2_AUTOCONFIG_FILENAME = "spring.factories";
     String SPRING_3_AUTOCONFIG_FILENAME = "org.springframework.boot.autoconfigure.AutoConfiguration.imports";
+    String LISTENER_SERVICE_IMPL_TEMPLATE_NAME = "listenerServiceImpl.mustache";
 
     String MODEL_NAME = "modelName";
     String MODEL_NAME_CAMEL = "modelNameCamel";

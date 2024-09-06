@@ -12,4 +12,6 @@ public interface MyCodegen extends CodegenConfig {
     String getSourceFolder();
 
     boolean isUseSpringBoot3();
+
+    String getConfigPackage();
 }

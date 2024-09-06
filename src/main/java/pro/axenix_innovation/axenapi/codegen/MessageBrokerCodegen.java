@@ -35,6 +35,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
     protected boolean useJms = false;
     protected boolean useAxenAPI = true;
     protected String axenAPIVersion = "2.0.0";
+    protected boolean interfaceOnly = false;
 
     private LibHelper libHelper;
 
@@ -48,8 +49,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         apiTemplateFiles.clear();
         // find ApiUtil.Java in supportingFiles and remove it
         supportingFiles.removeIf(f -> f.getDestinationFilename().equals("ApiUtil.java"));
-        libHelper.setTemplates(this, false);
-
+        libHelper.setTemplates(this, interfaceOnly);
         if (this.additionalProperties.containsKey("useAxenAPI")) {
             useAxenAPI = this.convertPropertyToBoolean("useAxenAPI");
         }
@@ -115,7 +115,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         cliOptions.add(CliOption.newString("axenAPIVersion", "AxenApi version. If not specified, then latest version will be used.").defaultValue(axenAPIVersion));
         cliOptions.add(CliOption.newString("kafkaBootstrap", "List of kafka bootstrap servers (comma separated)."));
         cliOptions.add(CliOption.newString("listenerPackage", "Yes\tNo default value\tPackage, in which client/listeners will be generated."));
-        cliOptions.add(CliOption.newString("modelPackage", "Package, in wich models will be generated (Data Transfer Object)."));
+        cliOptions.add(CliOption.newString("modelPackage", "Package, in which models will be generated (Data Transfer Object)."));
         cliOptions.add(CliOption.newBoolean("useSpring3", "If true, then code will be generated for springboot 3.1. If false, then code will be generated for spring boot 2.7.", true));
         cliOptions.add(CliOption.newBoolean(IS_KAFKA_CLIENT, "If true, client code(producer) will be generated, if false - server code(consumer).", false));
         cliOptions.add(CliOption.newBoolean("interfaceOnly", "Affects only client generation. If true - Kafka consumer implemenation classes will be generated, if false - only iterfaces.", true));
@@ -175,4 +175,8 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
 //    public String axenAPIVersion() {
 //        return axenAPIVersion;
 //    }
+
+    public boolean isInterfaceOnly() {
+        return interfaceOnly;
+    }
 }

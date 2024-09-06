@@ -43,9 +43,13 @@ import org.springframework.hateoas.RepresentationModel;
 
 import java.util.*;
 import {{javaxPackage}}.annotation.Generated;
-{{#models}}{{#model}}{{#vendorExtensions.x-outgoing}}
+{{#models}}{{#model}}
+    {{#isUseAxenAPI}}
+    {{#vendorExtensions.x-outgoing}}
 import pro.axenix_innovation.axenapi.annotation.Outgoing;
-{{/vendorExtensions.x-outgoing}}{{/model}}{{/models}}
+{{/vendorExtensions.x-outgoing}}
+    {{/isUseAxenAPI}}
+{{/model}}{{/models}}
 
 {{#models}}
 {{#model}}
