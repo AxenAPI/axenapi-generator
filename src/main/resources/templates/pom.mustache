@@ -105,6 +105,12 @@
         {{/interfaceOnly}}
     </build>
     <dependencies>
+
+        <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>1.13.0</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web{{#reactive}}flux{{/reactive}}</artifactId>
@@ -134,7 +140,7 @@
         {{#isUseAxenAPI}}
             <dependency>
                 <groupId>pro.axenix-innovation</groupId>
-                <artifactId>axenapi-spring6</artifactId>
+                <artifactId>axenapi</artifactId>
                 <version>{{axenAPIVersion}}</version>
             </dependency>
         {{/isUseAxenAPI}}

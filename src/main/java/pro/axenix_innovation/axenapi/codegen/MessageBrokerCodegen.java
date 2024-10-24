@@ -6,10 +6,7 @@ import org.openapitools.codegen.CodegenOperation;
 import org.openapitools.codegen.languages.SpringCodegen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pro.axenix_innovation.axenapi.codegen.helper.JmsHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.KafkaHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.LibHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.RabbitHelper;
+import pro.axenix_innovation.axenapi.codegen.helper.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,7 +31,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
     protected boolean useRabbit = false;
     protected boolean useJms = false;
     protected boolean useAxenAPI = true;
-    protected String axenAPIVersion = "2.0.0";
+    protected String axenAPIVersion = "1.0.1";
     protected boolean interfaceOnly = false;
 
     private LibHelper libHelper;
@@ -79,14 +76,16 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
 
         ArrayList<HashMap<String, String>> xTags = (ArrayList<HashMap<String, String>>) operation.getExtensions().get("x-tags");
 
-        String tags = xTags.stream().map(m ->
-                m.entrySet().stream()
-                        .filter(e -> e.getKey().equals("tag"))
-                        .map(Map.Entry::getValue)
-                        .collect(Collectors.joining("\", \"", "\"", "\""))
-        ).collect(Collectors.joining(", "));
+        if(xTags != null) {
+            String tags = xTags.stream().map(m ->
+                    m.entrySet().stream()
+                            .filter(e -> e.getKey().equals("tag"))
+                            .map(Map.Entry::getValue)
+                            .collect(Collectors.joining("\", \"", "\"", "\""))
+            ).collect(Collectors.joining(", "));
 
-        co.vendorExtensions.put("tags", tags);
+            co.vendorExtensions.put("tags", tags);
+        }
 
         operationId = libHelper.addOperationInfo(tag, basePath, operation, co, operations);
 
@@ -144,6 +143,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
                 libPrefix = pathElements.get(0);
             }
         }
+
         LOGGER.info("prefix = " + libPrefix);
         if (KafkaHelper.PREFIX.equals(libPrefix)) {
             useKafka = true;
@@ -154,6 +154,11 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         } else if (JmsHelper.PREFIX.equals(libPrefix)) {
             useJms = true;
             libHelper = JmsHelper.getInstance();
+        } else {
+            useJms = false;
+            useKafka = false;
+            useRabbit = false;
+            libHelper = EmptyHelper.getInstance();
         }
 
         if (path != null && libHelper == null) {
