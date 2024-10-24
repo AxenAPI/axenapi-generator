@@ -81,6 +81,11 @@ public class KafkaCodegenGenerator extends SpringCodegen implements MyCodegen {
         return isKafkaClient;
     }
 
+    @Override
+    public boolean isUseGradle() {
+        return false;
+    }
+
     public void setKafkaClient(boolean kafkaClient) {
         isKafkaClient = kafkaClient;
     }

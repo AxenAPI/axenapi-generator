@@ -51,6 +51,19 @@ public class KafkaHelper implements LibHelper {
 
     @Override
     public void setTemplates(MyCodegen gen, boolean isInterfaceOnly) {
+        System.out.println("gen.isUseGradle(): " + gen.isUseGradle());
+        if (gen.isUseGradle()) {
+            gen.supportingFiles().add(new SupportingFile("gradle_build_spring_boot_2.mustache", "", "build.gradle"));
+            gen.supportingFiles().add(new SupportingFile("gradle_wrapper_properties.mustache", "gradle" + File.separator + "wrapper", "gradle-wrapper.properties"));
+            gen.supportingFiles().add(new SupportingFile("gradlew.mustache", "", "gradlew"));
+            gen.supportingFiles().add(new SupportingFile("gradlew_bat.mustache", "", "gradlew.bat"));
+            gen.supportingFiles().add(new SupportingFile("settings_gradle.mustache", "", "settings.gradle"));
+            gen.supportingFiles().add(new SupportingFile("axenapi_properties.mustache", "", "axenapi.properties"));
+            // remove pom.xml from supporting files
+            boolean b = gen.supportingFiles().removeIf(f -> f.getDestinationFilename().equals("pom.xml"));
+            System.out.println(b);
+            System.out.println("----------- from helper supportingFiles: " + gen.supportingFiles());
+        }
         if (gen.isKafkaClient()) {
             gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
             if (!isInterfaceOnly) {

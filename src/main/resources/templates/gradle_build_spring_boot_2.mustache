@@ -1,49 +1,49 @@
 plugins {
-id 'java'
-id 'org.springframework.boot' version '2.7.5'
-id 'io.spring.dependency-management' version '1.0.15.RELEASE'
-id "org.openapi.generator" version "6.1.0"
+    id 'java'
+    id 'org.springframework.boot' version '2.7.5'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+    id "org.openapi.generator" version "6.1.0"
 }
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
 java {
-sourceCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_11
 }
 
 configurations {
-compileOnly {
-extendsFrom annotationProcessor
-}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 dependencies {
-implementation 'org.springframework.boot:spring-boot-starter'
-implementation 'org.springframework.boot:spring-boot-starter-web'
-
-implementation 'org.springframework.boot:spring-boot-starter-activemq'
-implementation 'com.fasterxml.jackson.core:jackson-databind'
-
-implementation 'org.springframework.kafka:spring-kafka'
-compileOnly 'org.projectlombok:lombok'
-compileOnly 'org.mapstruct:mapstruct:1.4.2.Final'
-annotationProcessor 'org.projectlombok:lombok'
-annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
-
-//	swagger for kafka
-annotationProcessor "pro.axenix-innovation:axenapi:1.0.2-SNAPSHOT"
-implementation ("pro.axenix-innovation:axenapi:1.0.2-SNAPSHOT")
-
-// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
-implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'
-
-testImplementation 'org.springframework.boot:spring-boot-starter-test'
-testImplementation 'org.springframework.kafka:spring-kafka-test'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework.kafka:spring-kafka'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    // axenapi
+    annotationProcessor "pro.axenix-innovation:axenapi:1.0.1"
+    implementation("pro.axenix-innovation:axenapi:1.0.1") {
+        exclude group: 'org.springdoc'
+    }
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.13'
+    implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.6'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 tasks.named('test') {
-useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 

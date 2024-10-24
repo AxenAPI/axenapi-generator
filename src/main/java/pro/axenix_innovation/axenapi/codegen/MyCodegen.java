@@ -14,4 +14,6 @@ public interface MyCodegen extends CodegenConfig {
     boolean isUseSpringBoot3();
 
     String getConfigPackage();
+
+    boolean isUseGradle();
 }
