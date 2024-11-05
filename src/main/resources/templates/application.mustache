@@ -4,8 +4,13 @@ spring.jackson.date-format={{basePackage}}.RFC3339DateFormat
 spring.jackson.serialization.WRITE_DATES_AS_TIMESTAMPS=false
 
 {{#useKafka}}
+    {{#kafkaBootstrap}}
 # kafka configuration
 spring.kafka.bootstrap-servers={{kafkaBootstrap}}
+    {{/kafkaBootstrap}}
+    {{^kafkaBootstrap}}
+spring.kafka.bootstrap-servers=localhost:29092
+    {{/kafkaBootstrap}}
 {{/useKafka}}
 
 {{#useRabbit}}
@@ -27,3 +32,5 @@ virtualan.datasource.jdbcurl=jdbc:hsqldb:mem:dataSource
 virtualan.datasource.username=sa
 virtualan.datasource.password=
 {{/virtualService}}
+
+axenapi.kafka.swagger.enabled=true

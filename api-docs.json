@@ -1,0 +1,62 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "New_Service_1",
+    "description" : "axenapi Specification for New_Service_1",
+    "version" : "1.0.0"
+  },
+  "paths" : {
+    "/kafka/group_1/New_Topic_1/Event" : {
+      "description" : "Operation for Event",
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Event"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Success. No content."
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Event" : {
+        "required" : [ "countryName", "locality", "region" ],
+        "type" : "object",
+        "properties" : {
+          "postOfficeBox" : {
+            "type" : "string"
+          },
+          "extendedAddress" : {
+            "type" : "string"
+          },
+          "streetAddress" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "postalCode" : {
+            "type" : "string"
+          },
+          "countryName" : {
+            "type" : "string"
+          }
+        },
+        "description" : "An address similar to http://microformats.org/wiki/h-card"
+      }
+    }
+  }
+}

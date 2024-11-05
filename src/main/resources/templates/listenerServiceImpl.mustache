@@ -28,8 +28,6 @@ public class {{baseName}}ServiceImpl implements {{baseName}}Service {
     public {{#returnSimpleType}}{{returnType}}{{/returnSimpleType}}{{^returnSimpleType}}void{{/returnSimpleType}} handle{{modelName}}({{modelName}} {{modelNameCamel}}{{#hasParams}}, Map<String, String> headers{{/hasParams}}) {
     {{/resultWrapper}}
                 System.out.println("handle message" + {{modelNameCamel}}.toString());
-                System.out.println("headers: " + headers.entrySet().stream().map(e -> e.getKey() + " " + e.getValue()).collect(Collectors.joining(",")));
-
                 {{#returnSimpleType}}
                     return null;
                 {{/returnSimpleType}}

@@ -3,13 +3,11 @@ package pro.axenix_innovation.axenapi.codegen;
 import io.swagger.v3.oas.models.Operation;
 import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenOperation;
+import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.languages.SpringCodegen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pro.axenix_innovation.axenapi.codegen.helper.JmsHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.KafkaHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.LibHelper;
-import pro.axenix_innovation.axenapi.codegen.helper.RabbitHelper;
+import pro.axenix_innovation.axenapi.codegen.helper.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,10 +32,11 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
     protected boolean useRabbit = false;
     protected boolean useJms = false;
     protected boolean useAxenAPI = true;
-    protected String axenAPIVersion = "2.0.0";
+    protected String axenAPIVersion = "1.0.1";
     protected boolean interfaceOnly = false;
 
     private LibHelper libHelper;
+    private boolean useGradle = false;
 
     @Override
     public void processOpts() {
@@ -49,10 +48,20 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         apiTemplateFiles.clear();
         // find ApiUtil.Java in supportingFiles and remove it
         supportingFiles.removeIf(f -> f.getDestinationFilename().equals("ApiUtil.java"));
+        if (this.additionalProperties.containsKey("useGradle")) {
+            useGradle = this.convertPropertyToBoolean("useGradle");
+        }
         libHelper.setTemplates(this, interfaceOnly);
+        setBuilderTemplates();
+        System.out.println("----------- supportingFiles: " + supportingFiles);
         if (this.additionalProperties.containsKey("useAxenAPI")) {
             useAxenAPI = this.convertPropertyToBoolean("useAxenAPI");
         }
+
+    }
+
+    private void setBuilderTemplates() {
+
     }
 
     @Override
@@ -77,16 +86,18 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
             basePath = basePath.substring(1);
         }
 
-        ArrayList<HashMap<String, String>> xTags = (ArrayList<HashMap<String, String>>) operation.getExtensions().get("x-tags");
+//        ArrayList<HashMap<String, String>> xTags = (ArrayList<HashMap<String, String>>) operation.getExtensions().get("x-tags");
 
-        String tags = xTags.stream().map(m ->
-                m.entrySet().stream()
-                        .filter(e -> e.getKey().equals("tag"))
-                        .map(Map.Entry::getValue)
-                        .collect(Collectors.joining("\", \"", "\"", "\""))
-        ).collect(Collectors.joining(", "));
-
-        co.vendorExtensions.put("tags", tags);
+//        if(xTags != null) {
+//            String tags = xTags.stream().map(m ->
+//                    m.entrySet().stream()
+//                            .filter(e -> e.getKey().equals("tag"))
+//                            .map(Map.Entry::getValue)
+//                            .collect(Collectors.joining("\", \"", "\"", "\""))
+//            ).collect(Collectors.joining(", "));
+//
+//            co.vendorExtensions.put("tags", tags);
+//        }
 
         operationId = libHelper.addOperationInfo(tag, basePath, operation, co, operations);
 
@@ -111,6 +122,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
     }
 
     private void addCliOptions() {
+        cliOptions.add(CliOption.newBoolean("useGradle", "If true, then Gradle will be used. If false, then Maven will not be used.", useGradle));
         cliOptions.add(CliOption.newBoolean("useAxenAPI", "If true, then AxenApi will be used. If false, then AxenApi will not be used."));
         cliOptions.add(CliOption.newString("axenAPIVersion", "AxenApi version. If not specified, then latest version will be used.").defaultValue(axenAPIVersion));
         cliOptions.add(CliOption.newString("kafkaBootstrap", "List of kafka bootstrap servers (comma separated)."));
@@ -144,6 +156,7 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
                 libPrefix = pathElements.get(0);
             }
         }
+
         LOGGER.info("prefix = " + libPrefix);
         if (KafkaHelper.PREFIX.equals(libPrefix)) {
             useKafka = true;
@@ -154,6 +167,11 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         } else if (JmsHelper.PREFIX.equals(libPrefix)) {
             useJms = true;
             libHelper = JmsHelper.getInstance();
+        } else {
+            useJms = false;
+            useKafka = false;
+            useRabbit = false;
+            libHelper = EmptyHelper.getInstance();
         }
 
         if (path != null && libHelper == null) {
@@ -168,6 +186,11 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
         return false;
     }
 
+    @Override
+    public boolean isUseGradle() {
+        return useGradle;
+    }
+
     public boolean isUseAxenAPI() {
         return useAxenAPI;
     }
@@ -178,5 +201,9 @@ public class MessageBrokerCodegen extends SpringCodegen implements MyCodegen {
 
     public boolean isInterfaceOnly() {
         return interfaceOnly;
+    }
+
+    public void setUseGradle(boolean useGradle) {
+        this.useGradle = useGradle;
     }
 }
