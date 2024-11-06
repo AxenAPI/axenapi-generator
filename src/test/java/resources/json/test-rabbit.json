@@ -1,0 +1,69 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "App API",
+    "version": "snapshot"
+  },
+  "servers": [
+    {
+      "url": "http://axenapi.demo",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/rabbit/new_queue/ExampleMessage": {
+      "post": {
+        "description": "example handler",
+        "operationId": "ExampleHandler",
+        "tags": [
+          "example"
+        ],
+        "security": [
+          {
+            "Internal-Token": []
+          }
+        ],
+        "requestBody": {
+          "description": "Example message",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Example out",
+            "content": {
+              "*/*": {
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExampleMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "example field"
+          }
+        },
+        "description": "example message"
+      }
+    },
+    "securitySchemes": {
+      "Internal-Token": {
+        "type": "apiKey",
+        "name": "SERVICE_ACCESS_TOKEN",
+        "in": "header"
+      }
+    }
+  }
+}

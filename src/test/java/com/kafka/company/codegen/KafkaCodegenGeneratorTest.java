@@ -70,7 +70,9 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     String kafkaClientPath = Paths.get("build", "generated", "kafka-client").toAbsolutePath().toString();
 
@@ -138,12 +140,36 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     data = FileUtils.readFileToString(file, "UTF-8");
     Assert.assertTrue(data.contains("messageIdName = \"" + messageIdName + "\""));
     Assert.assertTrue(data.contains("correlationIdName = \"" + correlationIdName + "\""));
     Assert.assertTrue(data.contains("sendBytes = " + sendBytes));
+    Assert.assertTrue(data.contains("generateMessageId = " + generateMessageId));
+    Assert.assertTrue(data.contains("generateCorrelationId = " + generateCorrelationId));
+
+    generateMessageId = true;
+    generateCorrelationId = true;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    file = new File(pathToKafkaSenderServiceImpl);
+    data = FileUtils.readFileToString(file, "UTF-8");
     Assert.assertTrue(data.contains("generateMessageId = " + generateMessageId));
     Assert.assertTrue(data.contains("generateCorrelationId = " + generateCorrelationId));
 
@@ -159,7 +185,9 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     Assert.assertFalse(new File(pathToKafkaSenderServiceImpl).exists());
 
@@ -177,7 +205,9 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     fileNames = new HashSet<>(10);
 
@@ -210,7 +240,9 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     String pathToChiefModelFile = Paths.get("build",
             "generated",
@@ -226,7 +258,7 @@ public class KafkaCodegenGeneratorTest {
     String chief = FileUtils.readFileToString(new File(pathToChiefModelFile), "UTF-8");
 
     Assert.assertTrue(chief.contains("import javax.validation.Valid"));
-    Assert.assertFalse(chief.contains("jakarta.validation.Valid"));
+    Assert.assertFalse(chief.contains("import jakarta.validation.Valid"));
 
     useSpringBoot3 = true;
 
@@ -240,13 +272,329 @@ public class KafkaCodegenGeneratorTest {
             sendBytes,
             messageIdName,
             correlationIdName,
-            useSpringBoot3);
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
 
     chief = FileUtils.readFileToString(new File(pathToChiefModelFile), "UTF-8");
 
     Assert.assertFalse(chief.contains("import javax.validation.Valid"));
     Assert.assertTrue(chief.contains("import jakarta.validation.Valid"));
 
+  }
+
+
+  @Test
+  public void testJmsClientFullGeneration() throws IOException {
+    boolean isKafkaClient = true;
+    boolean isInterfaceOnly = false;
+    boolean setTags = false;
+    boolean sendBytes = false;
+    boolean generateMessageId = false;
+    boolean generateCorrelationId = false;
+    boolean useSpringBoot3 = false;
+    String messageIdName = "kafka_messageId";
+    String correlationIdName = "kafka_correlationId";
+    String modelPackage = "swagger4kafka.model";
+    String apiPackage = "swagger4kafka.client";
+    String outputDir = Paths.get("build", "generated", "jms-client").toAbsolutePath().toString();
+    String pathToOpenApi = Paths.get("src","test", "java", "resources", "json", "test-jms.json")
+            .toFile()
+            .getAbsolutePath();
+
+    OpenAPI openAPI = generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    String jmsClientPath = Paths.get("build", "generated", "jms-client").toAbsolutePath().toString();
+
+    Assert.assertTrue(new File(jmsClientPath).exists());
+    Set<String> fileNames = new HashSet<>(10);
+
+    try (Stream<Path> stream = Files.walk(Paths.get(jmsClientPath))) {
+      Set<String> finalFileNames1 = fileNames;
+      stream.filter(Files::isRegularFile)
+              .forEach(file -> {
+                finalFileNames1.add(file.getFileName().toString());});
+    }
+
+    Set<String> schemas = openAPI.getComponents().getSchemas().keySet().stream().collect(Collectors.toSet());
+
+    //check that all schemas was generated
+    for (String schema: schemas) {
+      Assert.assertTrue(fileNames.contains(schema.concat(".java")));
+    }
+
+    //convert PathItem To ClassName
+    Set<String> classes = new HashSet<>(openAPI.getPaths().size());
+
+    for (String path: openAPI.getPaths().keySet()) {
+      classes.add(convertPathItemToClassName(path, false));
+    }
+
+    Set<String> lowerCaseFileNames = fileNames.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
+    //check class (interface and impl) exists
+    for (String className: classes) {
+      Assert.assertTrue(lowerCaseFileNames.contains(className.concat("Producer.java").toLowerCase()));
+      Assert.assertTrue(lowerCaseFileNames.contains(className.concat("ProducerImpl.java").toLowerCase()));
+    }
+
+    String pathToJmsSenderServiceImpl = Paths.get("build",
+            "generated",
+            "jms-client",
+            "src",
+            "main",
+            "java",
+            "service",
+            "impl",
+            "JmsSenderServiceImpl.java").toAbsolutePath().toString();
+
+    Assert.assertTrue(new File(pathToJmsSenderServiceImpl).exists());
+
+    isKafkaClient = false;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    Assert.assertTrue(!new File(pathToJmsSenderServiceImpl).exists());
+
+    isInterfaceOnly = true;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    fileNames = new HashSet<>(10);
+
+    try (Stream<Path> stream = Files.walk(Paths.get(jmsClientPath))) {
+      Set<String> finalFileNames = fileNames;
+      stream.filter(Files::isRegularFile)
+              .forEach(fileName -> {
+                finalFileNames.add(fileName.getFileName().toString());});
+    }
+
+    lowerCaseFileNames = fileNames.stream().map(String::toLowerCase).collect(Collectors.toSet());
+
+    //convert PathItem To ClassName
+    classes = new HashSet<>(openAPI.getPaths().size());
+
+    for (String path: openAPI.getPaths().keySet()) {
+      classes.add(convertPathItemToClassName(path, false));
+    }
+
+    //check class (interface) exists without impl
+    for (String className: classes) {
+      Assert.assertTrue(lowerCaseFileNames.contains(className.concat("Service.java").toLowerCase()));
+      Assert.assertFalse(lowerCaseFileNames.contains(className.concat("ServiceImpl.java").toLowerCase()));
+    }
+
+    String pathToExampleInFile = Paths.get("build",
+            "generated",
+            "jms-client",
+            "src",
+            "main",
+            "java",
+            "swagger4kafka",
+            "model",
+            "ExampleIn.java").toAbsolutePath().toString();
+
+    String exampleInModel = FileUtils.readFileToString(new File(pathToExampleInFile), "UTF-8");
+
+    Assert.assertTrue(exampleInModel.contains("import javax.validation.Valid"));
+    Assert.assertFalse(exampleInModel.contains("import jakarta.validation.Valid"));
+
+    useSpringBoot3 = true;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    exampleInModel = FileUtils.readFileToString(new File(pathToExampleInFile), "UTF-8");
+
+    Assert.assertFalse(exampleInModel.contains("import javax.validation.Valid"));
+    Assert.assertTrue(exampleInModel.contains("import jakarta.validation.Valid"));
+  }
+
+  /**
+   * ?????? ???? ????????? ? ?????? ????????? ?????????? ??? rabbit-client.
+   * @throws IOException
+   */
+  @Test
+  public void testRabbitClientFullGeneration() throws IOException {
+    boolean isKafkaClient = true;
+    boolean isInterfaceOnly = false;
+    boolean setTags = false;
+    boolean sendBytes = false;
+    boolean generateMessageId = false;
+    boolean generateCorrelationId = false;
+    boolean useSpringBoot3 = false;
+    String messageIdName = "kafka_messageId";
+    String correlationIdName = "kafka_correlationId";
+    String modelPackage = "swagger4kafka.model";
+    String apiPackage = "swagger4kafka.client";
+    String outputDir = Paths.get("build", "generated", "rabbit-client").toAbsolutePath().toString();
+    String pathToOpenApi = Paths.get("src","test", "java", "resources", "json", "test-rabbit.json")
+            .toFile()
+            .getAbsolutePath();
+
+    OpenAPI openAPI = generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    String jmsClientPath = Paths.get("build", "generated", "rabbit-client").toAbsolutePath().toString();
+
+    Assert.assertTrue(new File(jmsClientPath).exists());
+    Set<String> fileNames = new HashSet<>(10);
+
+    try (Stream<Path> stream = Files.walk(Paths.get(jmsClientPath))) {
+      Set<String> finalFileNames1 = fileNames;
+      stream.filter(Files::isRegularFile)
+              .forEach(file -> {
+                finalFileNames1.add(file.getFileName().toString());});
+    }
+
+    Set<String> schemas = openAPI.getComponents().getSchemas().keySet().stream().collect(Collectors.toSet());
+
+    //check that all schemas was generated
+    for (String schema: schemas) {
+      Assert.assertTrue(fileNames.contains(schema.concat(".java")));
+    }
+
+    Assert.assertTrue(fileNames.contains("RabbitSenderService.java"));
+    Assert.assertTrue(fileNames.contains("RabbitSenderServiceImpl.java"));
+
+    isKafkaClient = false;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    Assert.assertTrue(new File(jmsClientPath).exists());
+    fileNames = new HashSet<>(10);
+
+    try (Stream<Path> stream = Files.walk(Paths.get(jmsClientPath))) {
+      Set<String> finalFileNames1 = fileNames;
+      stream.filter(Files::isRegularFile)
+              .forEach(file -> {
+                finalFileNames1.add(file.getFileName().toString());});
+    }
+
+    Assert.assertFalse(fileNames.contains("RabbitSenderService.java"));
+    Assert.assertFalse(fileNames.contains("RabbitSenderServiceImpl.java"));
+
+    isInterfaceOnly = true;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    String pathToExampleInFile = Paths.get("build",
+            "generated",
+            "rabbit-client",
+            "src",
+            "main",
+            "java",
+            "swagger4kafka",
+            "model",
+            "ExampleMessage.java").toAbsolutePath().toString();
+
+    String exampleMessageModel = FileUtils.readFileToString(new File(pathToExampleInFile), "UTF-8");
+
+    Assert.assertTrue(exampleMessageModel.contains("import javax.validation.Valid"));
+    Assert.assertFalse(exampleMessageModel.contains("import jakarta.validation.Valid"));
+
+    useSpringBoot3 = true;
+
+    generateClient(pathToOpenApi,
+            outputDir,
+            apiPackage,
+            modelPackage,
+            setTags,
+            isInterfaceOnly,
+            isKafkaClient,
+            sendBytes,
+            messageIdName,
+            correlationIdName,
+            useSpringBoot3,
+            generateMessageId,
+            generateCorrelationId);
+
+    exampleMessageModel = FileUtils.readFileToString(new File(pathToExampleInFile), "UTF-8");
+
+    Assert.assertFalse(exampleMessageModel.contains("import javax.validation.Valid"));
+    Assert.assertTrue(exampleMessageModel.contains("import jakarta.validation.Valid"));
   }
 
   private OpenAPI generateClient(String pathToOpenApi,
@@ -259,7 +607,9 @@ public class KafkaCodegenGeneratorTest {
                               boolean sendBytes,
                               String messageIdName,
                               String correlationIdName,
-                              boolean useSpringBoot3) throws IOException {
+                              boolean useSpringBoot3,
+                              boolean generateMessageId,
+                              boolean generateCorrelationId) throws IOException {
     OpenAPI openAPI = new OpenAPIParser()
             .readLocation(pathToOpenApi, null, new ParseOptions()).getOpenAPI();
 
@@ -281,6 +631,8 @@ public class KafkaCodegenGeneratorTest {
     kafkaCodegenGenerator.setMessageIdName(messageIdName);
     kafkaCodegenGenerator.setCorrelationIdName(correlationIdName);
     kafkaCodegenGenerator.setUseSpringBoot3(useSpringBoot3);
+    kafkaCodegenGenerator.setGenerateCorrelationId(generateCorrelationId);
+    kafkaCodegenGenerator.setGenerateMessageId(generateMessageId);
 
     ClientOptInput input = new ClientOptInput();
     input.openAPI(openAPI);
@@ -304,12 +656,29 @@ public class KafkaCodegenGeneratorTest {
   }
 
   private String convertPathItemToClassName(String path) {
+    return convertPathItemToClassName(path, true);
+  }
+
+  private String convertPathItemToClassName(String path, boolean isKafkaClient) {
     List<String> values = Arrays.stream(StringUtils.split(path, "/")).collect(Collectors.toList());
 
     String className = "";
-    for (int i = values.size() - 2; i > 0; i--) {
-      className = className.concat(values.get(i)).concat(" ");
+
+    if (isKafkaClient) {
+      for (int i = values.size() - 2; i > 0; i--) {
+        className = className.concat(values.get(i)).concat(" ");
+      }
+    } else {
+      int index = 0;
+      for (String value: values) {
+        if (index == 0) {
+          index++;
+          continue;
+        }
+        className = className.concat(value).concat(" ");
+      }
     }
+
     className = className.replaceAll("-"," ")
                          .replaceAll("_"," ");
 

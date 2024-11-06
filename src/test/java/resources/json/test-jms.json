@@ -1,0 +1,153 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "App API",
+    "version": "snapshot"
+  },
+  "servers": [
+    {
+      "url": "http://axenapi.demo",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/jms/example_queue/ExampleIn": {
+      "post": {
+        "description": "example handler",
+        "operationId": "ExampleHandler",
+        "tags": [
+          "example"
+        ],
+        "security": [
+          {
+            "Internal-Token": []
+          }
+        ],
+        "requestBody": {
+          "description": "Example in",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Example out",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExampleOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jms/example_queue/ExampleOut": {
+      "post": {
+        "description": "Queue: example_queue, Payload: ExampleOut",
+        "operationId": "example_queueExampleOutHandler",
+        "tags": [
+          "example"
+        ],
+        "security": [
+          {
+            "Internal-Token": []
+          }
+        ],
+        "requestBody": {
+          "description": "Example out",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleOut"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jms/new_queue/ExampleOut": {
+      "post": {
+        "description": "New queue handler",
+        "operationId": "NewQueueHandler",
+        "tags": [
+          "newQueue"
+        ],
+        "security": [
+          {
+            "Internal-Token": []
+          }
+        ],
+        "requestBody": {
+          "description": "Example in",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ExampleOut"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExampleIn": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "example field"
+          }
+        },
+        "description": "example message"
+      },
+      "ExampleOut": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "example field"
+          }
+        },
+        "description": "example message"
+      },
+      "OutgPojo": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "subj"
+          }
+        },
+        "description": "subject descr",
+        "x-outgoing": {
+          "topics": [
+            "Outg topic"
+          ],
+          "type": "Message",
+          "tags": [
+            "abcde",
+            "outg"
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "Internal-Token": {
+        "type": "apiKey",
+        "name": "SERVICE_ACCESS_TOKEN",
+        "in": "header"
+      }
+    }
+  }
+}
