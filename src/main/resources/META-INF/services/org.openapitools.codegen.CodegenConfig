@@ -1,1 +1,2 @@
 pro.axenix_innovation.axenapi.codegen.KafkaCodegenGenerator
+pro.axenix_innovation.axenapi.codegen.MessageBrokerCodegen

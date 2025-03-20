@@ -7,13 +7,15 @@ package {{apiPackage}};
 
 import {{apiPackage}}.service.{{baseName}}Service;
 import org.springframework.beans.factory.annotation.Autowired;
+{{#isUseAxenAPI}}
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerDescription;
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerTags;
 import pro.axenix_innovation.axenapi.annotation.KafkaSecured;
-import org.springframework.kafka.annotation.KafkaHandler;
-import org.springframework.kafka.annotation.KafkaListener;
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerHeader;
 import pro.axenix_innovation.axenapi.annotation.KafkaHandlerHeaders;
+{{/isUseAxenAPI}}
+import org.springframework.kafka.annotation.KafkaHandler;
+import org.springframework.kafka.annotation.KafkaListener;
 {{#imports}}import {{import}};
 {{/imports}}
 import org.springframework.messaging.handler.annotation.Payload;
@@ -25,6 +27,9 @@ import java.util.Map;
 @KafkaListener(topics = "{{topic}}", groupId = "{{groupId}}")
     {{/operation.0.vendorExtensions}}
 {{/operations}}
+{{^isInterfaceOnly}}
+    @org.springframework.stereotype.Component
+{{/isInterfaceOnly}}
 public final class {{baseName}}Listener {
     private final {{baseName}}Service service;
 
@@ -38,17 +43,23 @@ public final class {{baseName}}Listener {
         {{#vendorExtensions}}
     @KafkaHandler
     {{#notes}}
+        {{#isUseAxenAPI}}
     @KafkaHandlerDescription("{{notes}}")
+    {{/isUseAxenAPI}}
     {{/notes}}
     {{#tags}}
-    @KafkaHandlerTags(tags = { {{{tags}}} })
+        {{#isUseAxenAPI}}
+/*    @KafkaHandlerTags(tags = { {{{tags}}} }) */
+    {{/isUseAxenAPI}}
     {{/tags}}
     {{#hasOptionalParams}}
+        {{#isUseAxenAPI}}
     @KafkaHandlerHeaders(headers = {
         {{#queryParams}}
         @KafkaHandlerHeader(header = "{{paramName}}"{{#required}}, required = true{{/required}}){{^-last}},{{/-last}}
         {{/queryParams}}
     })
+    {{/isUseAxenAPI}}
     {{/hasOptionalParams}}
     {{#securityAnnotation}}
     {{#hasAuthMethods}}

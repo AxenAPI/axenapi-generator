@@ -1,0 +1,9 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "New_Service_1",
+    "description" : "axenapi Specification for New_Service_1",
+    "version" : "1.0.0"
+  },
+  "paths" : { }
+}

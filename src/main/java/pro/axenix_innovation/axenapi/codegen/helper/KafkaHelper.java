@@ -8,6 +8,7 @@ import org.openapitools.codegen.utils.CamelizeOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pro.axenix_innovation.axenapi.codegen.KafkaCodegenGenerator;
+import pro.axenix_innovation.axenapi.codegen.MyCodegen;
 
 import java.io.File;
 import java.util.*;
@@ -36,6 +37,8 @@ public class KafkaHelper implements LibHelper {
     private static final String TOPIC = "topic";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaHelper.class);
+    private static final String KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME = PREFIX + File.separator + "KafkaConsumerConfig.mustache";
+    private static final String KAFKA_CONSUMER_CONFIG_FILENAME =  PREFIX + File.separator + "KafkaConsumerConfig.java";
 
     private static LibHelper instance;
 
@@ -47,7 +50,20 @@ public class KafkaHelper implements LibHelper {
     }
 
     @Override
-    public void setTemplates(KafkaCodegenGenerator gen, boolean isInterfaceOnly) {
+    public void setTemplates(MyCodegen gen, boolean isInterfaceOnly) {
+        System.out.println("gen.isUseGradle(): " + gen.isUseGradle());
+        if (gen.isUseGradle()) {
+            gen.supportingFiles().add(new SupportingFile("gradle_build_spring_boot_2.mustache", "", "build.gradle"));
+            gen.supportingFiles().add(new SupportingFile("gradle_wrapper_properties.mustache", "gradle" + File.separator + "wrapper", "gradle-wrapper.properties"));
+            gen.supportingFiles().add(new SupportingFile("gradlew.mustache", "", "gradlew"));
+            gen.supportingFiles().add(new SupportingFile("gradlew_bat.mustache", "", "gradlew.bat"));
+            gen.supportingFiles().add(new SupportingFile("settings_gradle.mustache", "", "settings.gradle"));
+            gen.supportingFiles().add(new SupportingFile("axenapi_properties.mustache", "", "axenapi.properties"));
+            // remove pom.xml from supporting files
+            boolean b = gen.supportingFiles().removeIf(f -> f.getDestinationFilename().equals("pom.xml"));
+            System.out.println(b);
+            System.out.println("----------- from helper supportingFiles: " + gen.supportingFiles());
+        }
         if (gen.isKafkaClient()) {
             gen.apiTemplateFiles().put(CLIENT_TEMPLATE_NAME, ".java");
             if (!isInterfaceOnly) {
@@ -61,6 +77,7 @@ public class KafkaHelper implements LibHelper {
 
                 gen.supportingFiles().add(new SupportingFile(SENDER_SERVICE_CONFIG_TEMPLATE_NAME,
                         gen.getSourceFolder() + File.separator + "config", SENDER_SERVICE_CONFIG_FILENAME));
+
                 if (gen.isUseSpringBoot3()) {
                     gen.supportingFiles().add(new SupportingFile(SPRING_3_AUTOCONFIG_TEMPLATE_NAME, // /../resources/META-INF/spring
                             gen.getSourceFolder() + File.separator + ".." + File.separator + "resources" +
@@ -72,6 +89,11 @@ public class KafkaHelper implements LibHelper {
                 }
             }
         } else {
+            if(!isInterfaceOnly) {
+                gen.apiTemplateFiles().put(LISTENER_SERVICE_IMPL_TEMPLATE_NAME, ".java");
+            }
+            gen.supportingFiles().add(new SupportingFile(KAFKA_CONSUMER_CONFIG_TEMPLATE_NAME,
+                    (gen.getSourceFolder() + File.separator + gen.getConfigPackage()).replace(".", java.io.File.separator), KAFKA_CONSUMER_CONFIG_FILENAME));
             gen.apiTemplateFiles().put(LISTENER_TEMPLATE_NAME, ".java");
             gen.apiTemplateFiles().put(LISTENER_SERVICE_TEMPLATE_NAME, ".java");
         }
@@ -122,7 +144,7 @@ public class KafkaHelper implements LibHelper {
     }
 
     @Override
-    public String apiFilename(String templateName, String tag, KafkaCodegenGenerator gen) {  // TODO: consider default implementation in interface
+    public String apiFilename(String templateName, String tag, MyCodegen gen) {  // TODO: consider default implementation in interface
         String suffix = gen.apiTemplateFiles().get(templateName);
         if (templateName.equals(CLIENT_IMPL_TEMPLATE_NAME)) {
             return gen.apiFileFolder() + File.separator + "impl" + File.separator +
@@ -135,6 +157,9 @@ public class KafkaHelper implements LibHelper {
             listenerQualifier = "Listener";
         } else if (templateName.equals(LISTENER_SERVICE_TEMPLATE_NAME)) {
             listenerQualifier = "Service";
+            listenerInnerPackage = "service" + File.separator;
+        } else if (LISTENER_SERVICE_IMPL_TEMPLATE_NAME.equals(templateName)) {
+            listenerQualifier = "ServiceImpl";
             listenerInnerPackage = "service" + File.separator;
         }
         if (!listenerQualifier.isEmpty()) {

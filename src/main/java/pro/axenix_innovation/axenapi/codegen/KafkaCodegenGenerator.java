@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
-public class KafkaCodegenGenerator extends SpringCodegen {
+public class KafkaCodegenGenerator extends SpringCodegen implements MyCodegen {
     private static final String MODEL_TEMPLATE_NAME = "model.mustache";
     public static final String CAMEL_REST_COMPONENT = "camelRestComponent";
     public static final String CAMEL_REST_BINDING_MODE = "camelRestBindingMode";
@@ -60,17 +60,17 @@ public class KafkaCodegenGenerator extends SpringCodegen {
     private boolean camelSecurityDefinitions = true;
     private String camelDataformatProperties = "";
 
-    private String resultWrapper = null;
+    private String resultWrapper = "";
 
     private String securityAnnotation = "";
 
-    private boolean sendBytes = true;
+    private boolean sendBytes = false;
 
     private boolean fromAxenAPIPlugin = false;
     private String messageIdName = "kafka_messageId";
     private String correlationIdName = "kafka_correlationId";
-    private Boolean generateMessageId = true;
-    private Boolean generateCorrelationId = true;
+    private Boolean generateMessageId = false;
+    private Boolean generateCorrelationId = false;
 
     private LibHelper libHelper;
 
@@ -79,6 +79,11 @@ public class KafkaCodegenGenerator extends SpringCodegen {
 
     public boolean isKafkaClient() {
         return isKafkaClient;
+    }
+
+    @Override
+    public boolean isUseGradle() {
+        return false;
     }
 
     public void setKafkaClient(boolean kafkaClient) {
@@ -236,7 +241,7 @@ public class KafkaCodegenGenerator extends SpringCodegen {
         camelUseDefaultValidationErrorProcessor = manageAdditionalProperty(CAMEL_USE_DEFAULT_VALIDATION_ERROR_PROCESSOR, camelUseDefaultValidationErrorProcessor);
         camelValidationErrorProcessor = manageAdditionalProperty(CAMEL_VALIDATION_ERROR_PROCESSOR, camelValidationErrorProcessor);
         camelSecurityDefinitions = manageAdditionalProperty(CAMEL_SECURITY_DEFINITIONS, camelSecurityDefinitions);
-        camelDataformatProperties = manageAdditionalProperty(CAMEL_DATAFORMAT_PROPERTIES, camelDataformatProperties);
+//        camelDataformatProperties = manageAdditionalProperty(CAMEL_DATAFORMAT_PROPERTIES, camelDataformatProperties);
 
         isKafkaClient = manageAdditionalProperty(IS_KAFKA_CLIENT, isKafkaClient);
         resultWrapper = manageAdditionalProperty(RESULT_WRAPPER, resultWrapper);
