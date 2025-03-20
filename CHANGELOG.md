@@ -1,3 +1,7 @@
+### version 2.0.1
+1) Generator code for all application [MessageBrokerCodegen](src/main/java/pro/axenix_innovation/axenapi/codegen/MessageBrokerCodegen.java)
+2) Use generator in openapi-generarator cli (more info in readme)
+3) 
 ### version 1.0.2
 1) Use generator in classpath with  "org.openapi.generator" gradle plugin
 ### version 1.0.1
